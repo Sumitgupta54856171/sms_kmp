@@ -1,7 +1,6 @@
 package com.example.schoolmanagement.api
 
 import com.example.schoolmanagement.api.models.*
-import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -13,7 +12,14 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import kotlinx.datetime.*
+import kotlinx.datetime.Clock.System as KSystem
+import kotlinx.datetime.Clock as KClock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.minus
+import kotlinx.datetime.DateTimeUnit
 
 @Serializable
 data class GenericBodyResponse<T>(val body: List<T>? = null, val data: List<T>? = null)
@@ -89,12 +95,23 @@ class DashboardRepository(private val ktorClient: KtorClient) {
         }
     }
 
-    suspend fun fetchDashboardData(): Result<DashboardData> = coroutineScope {
+    suspend fun fetchDashboardData(range: DashboardTimeRange = DashboardTimeRange.WEEK): Result<DashboardData> = coroutineScope {
         try {
-            // Using a workaround for Clock.System resolution issues in the IDE
-            val todayStr = "2026-08-17" 
-            val sessionStartStr = "2026-04-01"
-            val startDateStr = "2026-08-10"
+            val currentMoment: Instant = Instant.fromEpochMilliseconds(getCurrentEpochMillis())
+            val now: LocalDateTime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+            val todayStr = "${now.year}-${now.monthNumber.toString().padStart(2, '0')}-${now.dayOfMonth.toString().padStart(2, '0')}"
+            
+            val daysToSubtract = when(range) {
+                DashboardTimeRange.TODAY -> 0
+                DashboardTimeRange.WEEK -> 7
+                DashboardTimeRange.MONTH -> 30
+            }
+            
+            val startMoment = if (daysToSubtract == 0) currentMoment else currentMoment.minus(daysToSubtract, DateTimeUnit.DAY, TimeZone.currentSystemDefault())
+            val startDt = startMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+            val startDateStr = "${startDt.year}-${startDt.monthNumber.toString().padStart(2, '0')}-${startDt.dayOfMonth.toString().padStart(2, '0')}"
+            
+            val sessionStartStr = "${now.year}-04-01"
 
             val studentsDeferred = async { 
                 ktorClient.client.get("/api/v1/students/all").parseList<StudentMinimal>()
@@ -121,7 +138,7 @@ class DashboardRepository(private val ktorClient: KtorClient) {
             }
 
             val enrollmentClassesDeferred = async {
-                ktorClient.client.get("/api/v1/dashboard/get/enrollment/class").parseList<String>()
+                ktorClient.client.get("/api/v1/dashoard/get/enrollment/class").parseList<String>()
             }
 
             val todayFeesDeferred = async {
@@ -129,8 +146,7 @@ class DashboardRepository(private val ktorClient: KtorClient) {
             }
 
             val sessionFeesDeferred = async {
-                val sStartStr = "2026-04-01"
-                ktorClient.client.get("/api/v1/fee/invoice/history/$sStartStr/$todayStr").parseObject<FeeHistoryBody>()
+                ktorClient.client.get("/api/v1/fee/invoice/history/$sessionStartStr/$todayStr").parseObject<FeeHistoryBody>()
             }
 
             val students = studentsDeferred.await()

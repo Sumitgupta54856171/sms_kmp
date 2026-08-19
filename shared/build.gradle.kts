@@ -47,9 +47,11 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.kotlinx.datetime)
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.java)
+            implementation(libs.kotlinx.datetime)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -59,6 +61,8 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.charts)
+            implementation(libs.compose.icons.fontawesome)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
@@ -72,10 +76,10 @@ kotlin {
 
             // Serialization
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
+            api(libs.kotlinx.datetime)
 
             // Settings
-            implementation("com.russhwolf:multiplatform-settings-no-arg:1.3.0")
+            implementation(libs.multiplatform.settings)
 
             // Navigation
             implementation(libs.androidx.navigation.compose)

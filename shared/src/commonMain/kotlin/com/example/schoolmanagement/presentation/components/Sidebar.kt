@@ -16,10 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import compose.icons.FontAwesomeIcons
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.solid.*
+
 data class MenuItem(
     val title: String,
     val url: String,
-    // Add icon support later
+    val icon: ImageVector
 )
 
 data class MenuGroup(
@@ -31,28 +36,28 @@ val menuGroups = listOf(
     MenuGroup(
         label = "ACADEMICS",
         items = listOf(
-            MenuItem("Students", "students"),
-            MenuItem("Teachers", "teachers"),
-            MenuItem("Classes & Sections", "class"),
-            MenuItem("Subjects", "subjects"),
-            MenuItem("Elective Subjects", "elective-subject"),
-            MenuItem("Timetable", "timetable"),
-            MenuItem("Lesson Plans", "lesson-plans"),
+            MenuItem("Students", "students", FontAwesomeIcons.Solid.UserGraduate),
+            MenuItem("Teachers", "teachers", FontAwesomeIcons.Solid.ChalkboardTeacher),
+            MenuItem("Classes & Sections", "class", FontAwesomeIcons.Solid.School),
+            MenuItem("Subjects", "subjects", FontAwesomeIcons.Solid.Book),
+            MenuItem("Elective Subjects", "elective-subject", FontAwesomeIcons.Solid.BookReader),
+            MenuItem("Timetable", "timetable", FontAwesomeIcons.Solid.CalendarAlt),
+            MenuItem("Lesson Plans", "lesson-plans", FontAwesomeIcons.Solid.ClipboardList),
         )
     ),
     MenuGroup(
         label = "OPERATIONS",
         items = listOf(
-            MenuItem("Attendance", "attendance"),
-            MenuItem("Attendance Summary", "attendance/summary"),
-            MenuItem("Examinations", "timetable/exams"),
-            MenuItem("Grades", "grades"),
-            MenuItem("Fee Management", "fees"),
-            MenuItem("Invoice History", "fees/invoice-history"),
-            MenuItem("Fee Structure", "fees/structure"),
-            MenuItem("Transfer Certificate", "tc"),
-            MenuItem("Enrollment", "enrollment"),
-            MenuItem("Generate Login", "login-generate"),
+            MenuItem("Attendance", "attendance", FontAwesomeIcons.Solid.UserCheck),
+            MenuItem("Attendance Summary", "attendance/summary", FontAwesomeIcons.Solid.ChartBar),
+            MenuItem("Examinations", "timetable/exams", FontAwesomeIcons.Solid.FileAlt),
+            MenuItem("Grades", "grades", FontAwesomeIcons.Solid.GraduationCap),
+            MenuItem("Fee Management", "fees", FontAwesomeIcons.Solid.MoneyBillWave),
+            MenuItem("Invoice History", "fees/invoice-history", FontAwesomeIcons.Solid.History),
+            MenuItem("Fee Structure", "fees/structure", FontAwesomeIcons.Solid.LayerGroup),
+            MenuItem("Transfer Certificate", "tc", FontAwesomeIcons.Solid.FileExport),
+            MenuItem("Enrollment", "enrollment", FontAwesomeIcons.Solid.UserPlus),
+            MenuItem("Generate Login", "login-generate", FontAwesomeIcons.Solid.Key),
         )
     )
 )
@@ -115,8 +120,12 @@ fun Sidebar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Dashboard Icon Placeholder
-                Box(modifier = Modifier.size(20.dp).background(if(currentRoute == "dashboard") Color.White else Color.LightGray, RoundedCornerShape(4.dp)))
+                Icon(
+                    imageVector = FontAwesomeIcons.Solid.Columns,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = if (currentRoute == "dashboard") Color.White else Color(0xFF94A3B8)
+                )
                 Text(text = "Dashboard", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -153,8 +162,12 @@ fun Sidebar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Icon placeholder
-                            Box(modifier = Modifier.size(20.dp).background(if(isActive) Color(0xFF0D9488) else Color.LightGray, RoundedCornerShape(4.dp)))
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (isActive) Color(0xFF0D9488) else Color(0xFF94A3B8)
+                            )
                             Text(text = item.title, fontSize = 14.sp, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium)
                         }
                     }
@@ -188,8 +201,12 @@ fun Sidebar(
                 Text(userName, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(userRole, fontSize = 12.sp, color = Color.Gray)
             }
-            // Logout icon placeholder
-            Box(modifier = Modifier.size(16.dp).background(Color.Red, RoundedCornerShape(4.dp)))
+            Icon(
+                imageVector = FontAwesomeIcons.Solid.SignOutAlt,
+                contentDescription = "Logout",
+                modifier = Modifier.size(18.dp),
+                tint = Color(0xFFEF4444)
+            )
         }
     }
 }

@@ -1,0 +1,6 @@
+- [ ] Update models in KMP and React API to include `inTime`
+- [ ] Fix `AttendanceViewModel.kt` initialization and `inTime` logic
+- [ ] Restructure `AttendanceScreen.kt` UI (Premium look + In Time display)
+- [ ] Update `sms_frontend/src/api/attendance.ts` (Mapper fix + `inTime` support)
+- [ ] Update `sms_frontend/src/components/Attendence.tsx` (In Time column + Auto-time logic)
+- [ ] Verify build and functionality

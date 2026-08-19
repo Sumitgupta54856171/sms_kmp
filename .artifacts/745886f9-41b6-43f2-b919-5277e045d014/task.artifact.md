@@ -1,11 +1,21 @@
-# Tasks - Live Dashboard with Charts
+# Task: "Same-to-Same" UI/API Restructuring
 
-- [ ] Update `DashboardModels.kt` with chart data types
-- [ ] Implement real API calls in `DashboardRepository.kt`
-- [ ] Create `BarChart` component using Canvas
-- [ ] Create `PieChart` component using Canvas
-- [ ] Create `AreaChart` component using Canvas
-- [ ] Update `DashboardViewModel` to handle live data loading
-- [ ] Integrate charts into `DashboardScreen`
-- [ ] Implement responsive layout adjustments for charts
-- [ ] Verify build and data display on Android and Desktop
+- [/] Group 4: Student Attendance (High Priority)
+    - [ ] Restructure `AttendanceScreen.kt` (Edit/Done toggle, 4 stats cards, Indigo avatars)
+    - [ ] Update `AttendanceSummaryScreen.kt` (Gradient header, gender breakdown, expandable class cards)
+- [ ] Group 5: Fee Profile & Operations (High Priority)
+    - [ ] Update `FeeProfileScreen.kt` (Strict 6-box summary, Session table layout)
+    - [ ] Fix Data Isolation bug in `FeeProfileViewModel.kt`
+    - [ ] Enhance `TCScreen.kt` (Full 20+ field form, A5 Preview)
+- [ ] Group 1: Staff Management
+    - [ ] Restructure `TeacherScreen.kt` to Grid View (Adaptive cards, Quick action footer)
+    - [ ] Implement Role Change Modal logic
+- [ ] Group 2: Academic Infrastructure
+    - [ ] Restructure `TimetableScreen.kt` (Tabs, Scrollable horizontal selector)
+    - [ ] Refine `ClasspageScreen.kt` (Teal-900 icon cards)
+- [ ] Group 3: Assessment System
+    - [ ] Restructure `GradeScreen.kt` to 5-Step Filter Process
+    - [ ] Refine Exam Timetable layout in `ExamScreen.kt`
+- [ ] Final Verification
+    - [ ] Build shared & desktopApp
+    - [ ] Side-by-side UI comparison with React frontend

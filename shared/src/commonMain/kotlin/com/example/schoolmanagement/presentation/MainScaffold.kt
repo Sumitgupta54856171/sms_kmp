@@ -22,11 +22,11 @@ fun MainScaffold(
     userName: String,
     userRole: String,
     onLogout: () -> Unit,
+    isSidebarVisible: Boolean,
+    onToggleSidebar: () -> Unit,
     sessionViewModel: com.example.schoolmanagement.presentation.session.SessionViewModel,
     content: @Composable () -> Unit
 ) {
-    var isSidebarVisible by remember { mutableStateOf(true) }
-
     Row(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = isSidebarVisible,
@@ -55,8 +55,7 @@ fun MainScaffold(
                         ) 
                     },
                     navigationIcon = {
-                        IconButton(onClick = { isSidebarVisible = !isSidebarVisible }) {
-                            // Using a simple text-based icon since material-icons-extended had issues
+                        IconButton(onClick = onToggleSidebar) {
                             Text(if (isSidebarVisible) "←" else "☰", style = MaterialTheme.typography.titleLarge)
                         }
                     },

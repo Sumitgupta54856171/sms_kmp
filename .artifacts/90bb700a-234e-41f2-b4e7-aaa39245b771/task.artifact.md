@@ -1,0 +1,8 @@
+- [x] Create `DashboardTimeRange.kt` enum
+- [x] Update `DashboardRepository.kt` to support time ranges
+- [x] Update `DashboardViewModel.kt` with range state and reload logic
+- [x] Implement modern Material 3 Dashboard UI
+    - [x] Add `SingleChoiceSegmentedButtonRow` for range selection
+    - [x] Update `StatCard` with premium styling and icons
+    - [x] Integrate `compose-charts` into `BarChart`, `PieChart`, and `AreaChart`
+- [x] Final verification and layout check

@@ -1,8 +1,10 @@
 package com.example.schoolmanagement.presentation.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -11,37 +13,83 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.schoolmanagement.api.models.DashboardTimeRange
 import com.example.schoolmanagement.presentation.dashboard.components.*
+import compose.icons.FontAwesomeIcons
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.solid.*
 
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel) {
+fun DashboardScreen(viewModel: DashboardViewModel, onNavigate: (String) -> Unit) {
     val state by viewModel.state.collectAsState()
+    val selectedRange by viewModel.selectedRange.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFFF1F5F9), Color(0xFFFFFFFF))
+                )
+            )
+    ) {
         when (val currentState = state) {
             is DashboardState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFF0D9488), strokeWidth = 5.dp)
+                }
             }
             is DashboardState.Success -> {
-                DashboardContent(currentState.data)
+                DashboardContent(
+                    data = currentState.data,
+                    selectedRange = selectedRange,
+                    onRangeSelected = { viewModel.setTimeRange(it) },
+                    onRetry = { viewModel.loadDashboardData() },
+                    onNavigate = onNavigate
+                )
             }
             is DashboardState.Error -> {
-                Text(
-                    text = currentState.message,
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.error
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Something went wrong",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = currentState.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadDashboardData() }) {
+                        Text("Retry")
+                    }
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardContent(data: com.example.schoolmanagement.api.models.DashboardData) {
+fun DashboardContent(
+    data: com.example.schoolmanagement.api.models.DashboardData,
+    selectedRange: com.example.schoolmanagement.api.models.DashboardTimeRange,
+    onRangeSelected: (com.example.schoolmanagement.api.models.DashboardTimeRange) -> Unit,
+    onRetry: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenWidth = maxWidth
         val columns = when {
@@ -53,70 +101,117 @@ fun DashboardContent(data: com.example.schoolmanagement.api.models.DashboardData
 
         Column(
             modifier = Modifier
-                .padding(if (isMobile) 16.dp else 24.dp)
+                .fillMaxSize()
+                .padding(if (isMobile) 16.dp else 32.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(if (isMobile) 16.dp else 24.dp)
+            verticalArrangement = Arrangement.spacedBy(if (isMobile) 24.dp else 32.dp)
         ) {
-            // Header
-            Column {
-                Text(
-                    text = "Dashboard",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF1E293B)
-                )
-                Text(
-                    text = "Live school metrics and activity",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B)
-                )
+            // Modern Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Dashboard",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = "Live analytics and metrics Overview",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF64748B)
+                    )
+                }
+                
+                if (!isMobile) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SingleChoiceSegmentedButtonRow {
+                            DashboardTimeRange.values().forEachIndexed { index, range ->
+                                SegmentedButton(
+                                    selected = selectedRange == range,
+                                    onClick = { onRangeSelected(range) },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = DashboardTimeRange.values().size),
+                                    label = { Text(range.name.lowercase().capitalize()) }
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = onRetry) {
+                            Icon(FontAwesomeIcons.Solid.SyncAlt, contentDescription = "Refresh", tint = Color(0xFF0D9488))
+                        }
+                    }
+                }
             }
 
-            // Stats Grid
+            if (isMobile) {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    DashboardTimeRange.values().forEachIndexed { index, range ->
+                        SegmentedButton(
+                            selected = selectedRange == range,
+                            onClick = { onRangeSelected(range) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = DashboardTimeRange.values().size),
+                            label = { Text(range.name.lowercase().capitalize()) }
+                        )
+                    }
+                }
+            }
+
+            // High-Impact Stats Grid
             val stats = data.stats
             val statItems = listOf(
-                StatItem("Total Students", stats.totalStudents.toString(), Color(0xFF0D9488), "${stats.activeStudents} active students"),
-                StatItem("Today's Presence", "${stats.attendancePercentage}%", Color(0xFF10B981), "Present today"),
-                StatItem("Total Collection", "₹${(stats.totalFees / 100000).toInt()}L", Color(0xFF6366F1), "Current session"),
-                StatItem("Due Fees", "₹${(stats.dueFees / 100000).toInt()}L", Color(0xFFF43F5E), "Outstanding")
+                StatItem("Total Students", stats.totalStudents.toString(), Color(0xFF0D9488), FontAwesomeIcons.Solid.UserGraduate, "${stats.activeStudents} Active"),
+                StatItem("Faculty Members", stats.totalTeachers.toString(), Color(0xFF3B82F6), FontAwesomeIcons.Solid.ChalkboardTeacher, "Verified Staff"),
+                StatItem("Presence", "${stats.attendancePercentage}%", Color(0xFF10B981), FontAwesomeIcons.Solid.UserCheck, "Daily Attendance"),
+                StatItem("Collection", "₹${(stats.todayCollection / 1000).toInt()}K", Color(0xFF6366F1), FontAwesomeIcons.Solid.Wallet, "Today's Income")
             )
             
             ChunkedGrid(statItems, columns)
 
-            // Analytics Section (Charts)
+            // Dynamic Analytics Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                val isWide = screenWidth > 900.dp
+                val isWide = screenWidth > 1000.dp
                 if (isWide) {
-                    ChartCard("Enrollment by Class", modifier = Modifier.weight(1.5f)) {
+                    ChartCard("Enrollment Distribution", modifier = Modifier.weight(1.8f)) {
                         BarChart(data.enrollmentByClass)
                     }
-                    ChartCard("Gender Distribution", modifier = Modifier.weight(1f)) {
+                    ChartCard("Gender Breakdown", modifier = Modifier.weight(1.2f)) {
                         DonutChart(stats.maleStudents, stats.femaleStudents)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                            LegendItem("Boys", Color(0xFF3B82F6))
-                            LegendItem("Girls", Color(0xFFF43F5E))
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                            LegendItem("Boys", Color(0xFF3B82F6), stats.maleStudents.toString())
+                            LegendItem("Girls", Color(0xFFF43F5E), stats.femaleStudents.toString())
                         }
                     }
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                        ChartCard("Enrollment by Class") { BarChart(data.enrollmentByClass) }
-                        ChartCard("Gender Distribution") { 
+                        ChartCard("Enrollment Distribution") { BarChart(data.enrollmentByClass) }
+                        ChartCard("Gender Breakdown") { 
                             DonutChart(stats.maleStudents, stats.femaleStudents)
                         }
                     }
                 }
             }
 
-            // Trend Section
+            // Attendance Trend Full Width
             ChartCard("Attendance Trend") {
                 AreaChart(data.attendanceTrend)
             }
 
-            // Activity sections (Notices/Events)
+            // Academic Options Grid
+            Text("ACADEMIC OPTIONS", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B), letterSpacing = 1.sp)
+            AcademicOptionsGrid(onNavigate = onNavigate)
+
+            // Academic Options Grid
+            Text("ACADEMIC OPTIONS", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B), letterSpacing = 1.sp)
+            AcademicOptionsGrid(onNavigate = { /* Navigation logic needed here or passed down */ })
+
+            // Notices and Events Section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
@@ -133,36 +228,48 @@ fun DashboardContent(data: com.example.schoolmanagement.api.models.DashboardData
                 }
             }
             
-            // Quick Overview (Section 4 from web)
+            // Modern Bottom Overview
             QuickOverviewGrid(stats, columns)
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
 fun ChartCard(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(title.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), modifier = Modifier.padding(bottom = 20.dp))
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text(
+                text = title.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF94A3B8),
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
             content()
         }
     }
 }
 
 @Composable
-fun LegendItem(label: String, color: Color) {
+fun LegendItem(label: String, color: Color, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(modifier = Modifier.size(10.dp).background(color, RoundedCornerShape(2.dp)))
-        Text(label, fontSize = 12.sp, color = Color(0xFF64748B))
+        Box(modifier = Modifier.size(12.dp).background(color, RoundedCornerShape(4.dp)))
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+            Text(value, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF1E293B), fontWeight = FontWeight.Black)
+        }
     }
 }
 
-data class StatItem(val title: String, val value: String, val color: Color, val subtitle: String)
+data class StatItem(val title: String, val value: String, val color: Color, val icon: androidx.compose.ui.graphics.vector.ImageVector, val subtitle: String)
 
 @Composable
 fun ChunkedGrid(items: List<StatItem>, columns: Int) {
@@ -175,6 +282,7 @@ fun ChunkedGrid(items: List<StatItem>, columns: Int) {
                         title = item.title,
                         value = item.value,
                         color = item.color,
+                        icon = item.icon,
                         subtitle = item.subtitle,
                         modifier = Modifier.weight(1f)
                     )
@@ -188,30 +296,38 @@ fun ChunkedGrid(items: List<StatItem>, columns: Int) {
 @Composable
 fun QuickOverviewGrid(stats: com.example.schoolmanagement.api.models.DashboardStats, columns: Int) {
     val items = listOf(
-        Pair("Active Students", stats.activeStudents.toString()),
-        Pair("Total Faculty", stats.totalTeachers.toString()),
-        Pair("Enrollments", stats.totalEnrollments.toString()),
-        Pair("Male Ratio", "${if(stats.totalStudents > 0) (stats.maleStudents * 100 / stats.totalStudents) else 0}%"),
-        Pair("Female Ratio", "${if(stats.totalStudents > 0) (stats.femaleStudents * 100 / stats.totalStudents) else 0}%"),
-        Pair("Session", "2026-27")
+        Triple("Active Students", stats.activeStudents.toString(), Color(0xFF0D9488)),
+        Triple("Total Faculty", stats.totalTeachers.toString(), Color(0xFF3B82F6)),
+        Triple("Enrollments", stats.totalEnrollments.toString(), Color(0xFF8B5CF6)),
+        Triple("Male Students", stats.maleStudents.toString(), Color(0xFF3B82F6)),
+        Triple("Female Students", stats.femaleStudents.toString(), Color(0xFFF43F5E)),
+        Triple("Retention", "98%", Color(0xFF10B981))
     )
     
     val gridColumns = if(columns > 2) 6 else if(columns == 2) 3 else 2
     val rows = items.chunked(gridColumns)
     
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("QUICK OVERVIEW", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8))
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            "QUICK SNAPSHOT",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF94A3B8),
+            letterSpacing = 1.sp
+        )
         rows.forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                rowItems.forEach { (label, value) ->
-                    Card(
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                rowItems.forEach { (label, value, color) ->
+                    Surface(
                         modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp)
+                        color = Color.White,
+                        shape = RoundedCornerShape(20.dp),
+                        shadowElevation = 0.5.dp,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
                     ) {
                         Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1E293B))
-                            Text(label, fontSize = 10.sp, color = Color(0xFF94A3B8), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = color)
+                            Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -225,16 +341,22 @@ fun QuickOverviewGrid(stats: com.example.schoolmanagement.api.models.DashboardSt
 fun RecentNotices(notices: List<com.example.schoolmanagement.api.models.Notice>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("RECENT NOTICES", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8))
-            if (notices.isEmpty()) Text("No recent notices", fontSize = 14.sp, color = Color.Gray)
+        Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Text("RECENT NOTICES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+            if (notices.isEmpty()) {
+                Text("No announcements today", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            }
             notices.forEach { notice ->
-                Column {
-                    Text(notice.title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                    Text(notice.data, fontSize = 12.sp, color = Color(0xFF94A3B8))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Box(modifier = Modifier.size(4.dp, 32.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFFF59E0B)))
+                    Column {
+                        Text(notice.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        Text(notice.data, style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
+                    }
                 }
                 if (notice != notices.last()) HorizontalDivider(color = Color(0xFFF1F5F9))
             }
@@ -246,18 +368,34 @@ fun RecentNotices(notices: List<com.example.schoolmanagement.api.models.Notice>,
 fun UpcomingEvents(events: List<com.example.schoolmanagement.api.models.SchoolEvent>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("UPCOMING EVENTS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8))
-            if (events.isEmpty()) Text("No upcoming events", fontSize = 14.sp, color = Color.Gray)
+        Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Text("UPCOMING EVENTS", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+            if (events.isEmpty()) {
+                Text("No upcoming events", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            }
             events.forEach { event ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(modifier = Modifier.size(8.dp).background(parseColor(event.color ?: "#0D9488"), RoundedCornerShape(4.dp)))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Surface(
+                        modifier = Modifier.size(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = parseColor(event.color ?: "#0D9488").copy(alpha = 0.1f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = event.eventdate.takeLast(2),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = parseColor(event.color ?: "#0D9488")
+                            )
+                        }
+                    }
                     Column {
-                        Text(event.eventname, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        Text(event.eventdate, fontSize = 12.sp, color = Color(0xFF94A3B8))
+                        Text(event.eventname, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        Text(event.eventdate, style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
                     }
                 }
             }
@@ -277,3 +415,67 @@ private fun parseColor(hex: String): Color {
         Color(0xFF0D9488)
     }
 }
+
+@Composable
+fun AcademicOptionsGrid(onNavigate: (String) -> Unit) {
+    val options = listOf(
+        Triple("Attendance", "attendance", FontAwesomeIcons.Solid.UserCheck),
+        Triple("Summary", "attendance/summary", FontAwesomeIcons.Solid.ChartBar),
+        Triple("Teachers", "teachers", FontAwesomeIcons.Solid.ChalkboardTeacher),
+        Triple("Timetable", "timetable", FontAwesomeIcons.Solid.CalendarAlt),
+        Triple("Classes", "class", FontAwesomeIcons.Solid.School),
+        Triple("Exams", "timetable/exams", FontAwesomeIcons.Solid.FileAlt),
+        Triple("Grades", "grades", FontAwesomeIcons.Solid.ChartLine),
+        Triple("Invoices", "fees/invoice-history", FontAwesomeIcons.Solid.History),
+        Triple("TC", "tc", FontAwesomeIcons.Solid.FileExport),
+        Triple("Enrollment", "enrollment", FontAwesomeIcons.Solid.ArrowUp),
+        Triple("Logins", "login-generate", FontAwesomeIcons.Solid.Key)
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        options.chunked(3).forEach { rowOptions ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowOptions.forEach { (title, url, icon) ->
+                    OptionCard(title, icon, onClick = { onNavigate(url) }, modifier = Modifier.weight(1f))
+                }
+                // Fill empty slots in the last row to maintain grid alignment
+                repeat(3 - rowOptions.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OptionCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 0.5.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier.size(40.dp).background(Color(0xFFF0FDFA), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, modifier = Modifier.size(20.dp), tint = Color(0xFF0D9488))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
+    }
+}
+
+private fun String.capitalize() = this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }

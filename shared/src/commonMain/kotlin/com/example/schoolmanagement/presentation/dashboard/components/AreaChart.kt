@@ -1,65 +1,58 @@
 package com.example.schoolmanagement.presentation.dashboard.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.schoolmanagement.api.models.AttendanceTrendItem
 
+import androidx.compose.ui.graphics.SolidColor
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.Line
+
 @Composable
 fun AreaChart(
     data: List<AttendanceTrendItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    presentColor: Color = Color(0xFF10B981),
+    absentColor: Color = Color(0xFFF43F5E)
 ) {
-    if (data.isEmpty()) return
-
-    val maxVal = data.maxOf { it.total }.coerceAtLeast(1)
-
-    Canvas(modifier = modifier.fillMaxWidth().height(200.dp)) {
-        val width = size.width
-        val height = size.height
-        val stepX = width / (data.size - 1)
-
-        val path = Path()
-        val fillPath = Path()
-
-        data.forEachIndexed { i, item ->
-            val x = i * stepX
-            val y = height - (item.present.toFloat() / maxVal) * height
-
-            if (i == 0) {
-                path.moveTo(x, y)
-                fillPath.moveTo(x, height)
-                fillPath.lineTo(x, y)
-            } else {
-                path.lineTo(x, y)
-                fillPath.lineTo(x, y)
-            }
-            
-            if (i == data.size - 1) {
-                fillPath.lineTo(x, height)
-                fillPath.close()
-            }
+    if (data.isEmpty()) {
+        Box(modifier = modifier.height(200.dp), contentAlignment = Alignment.Center) {
+            Text("No trend data", color = Color.Gray)
         }
-
-        // Draw Area Fill
-        drawPath(
-            path = fillPath,
-            brush = Brush.verticalGradient(
-                colors = listOf(Color(0xFF10B981).copy(alpha = 0.3f), Color.Transparent)
-            )
-        )
-
-        // Draw Line
-        drawPath(
-            path = path,
-            color = Color(0xFF10B981),
-            style = Stroke(width = 3.dp.toPx())
-        )
+        return
     }
+
+    LineChart(
+        modifier = modifier.fillMaxWidth().height(250.dp),
+        data = listOf(
+            Line(
+                label = "Present",
+                values = data.map { it.present.toDouble() },
+                color = SolidColor(presentColor),
+                firstGradientFillColor = presentColor.copy(alpha = 0.3f),
+                secondGradientFillColor = Color.Transparent,
+                curvedEdges = true
+            ),
+            Line(
+                label = "Absent",
+                values = data.map { it.absent.toDouble() },
+                color = SolidColor(absentColor),
+                firstGradientFillColor = absentColor.copy(alpha = 0.2f),
+                secondGradientFillColor = Color.Transparent,
+                curvedEdges = true
+            )
+        ),
+        animationDelay = 300
+    )
 }
