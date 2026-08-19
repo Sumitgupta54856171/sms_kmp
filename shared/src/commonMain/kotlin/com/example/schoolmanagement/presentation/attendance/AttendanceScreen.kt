@@ -1,5 +1,8 @@
 package com.example.schoolmanagement.presentation.attendance
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,7 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,6 +25,40 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
 import kotlinx.datetime.*
+
+// Design tokens for consistent spacing
+private object Spacing {
+    val xs = 4.dp
+    val sm = 8.dp
+    val md = 12.dp
+    val lg = 16.dp
+    val xl = 20.dp
+    val xxl = 24.dp
+    val xxxl = 32.dp
+}
+
+// Design tokens for colors
+private object AppColors {
+    val Background = Color(0xFFF8FAFC)
+    val Surface = Color.White
+    val PrimaryText = Color(0xFF0F172A)
+    val SecondaryText = Color(0xFF64748B)
+    val TertiaryText = Color(0xFF94A3B8)
+    val Border = Color(0xFFE2E8F0)
+    val Accent = Color(0xFF0D9488)
+    val AccentLight = Color(0xFF99F6E4)
+    val Present = Color(0xFF10B981)
+    val PresentBg = Color(0xFFD1FAE5)
+    val Absent = Color(0xFFEF4444)
+    val AbsentBg = Color(0xFFFEE2E2)
+    val Holiday = Color(0xFF8B5CF6)
+    val HolidayBg = Color(0xFFEDE9FE)
+    val Total = Color(0xFF3B82F6)
+    val TotalBg = Color(0xFFDBEAFE)
+    val Indigo = Color(0xFF6366F1)
+    val IndigoDark = Color(0xFF4F46E5)
+    val Pink = Color(0xFFEC4899)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,260 +73,513 @@ fun AttendanceScreen(viewModel: AttendanceViewModel) {
 
     val allClasses = listOf("Nursery", "LKG", "UKG") + (1..12).map { it.toString() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
-            .padding(24.dp)
-    ) {
-        // Premium Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Scaffold(
+        containerColor = AppColors.Background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = Spacing.xxl)
         ) {
-            Column {
-                Text(
-                    "Daily Attendance",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF0F172A),
-                    letterSpacing = (-0.5).sp
+            Spacer(Modifier.height(Spacing.xl))
+
+            // Premium Header
+            AttendanceHeader(
+                isEditing = isEditing,
+                isSaving = isSaving,
+                canSave = state is AttendanceState.Success,
+                onToggleEdit = { isEditing = !isEditing },
+                onSave = { viewModel.saveAttendance() }
+            )
+
+            Spacer(Modifier.height(Spacing.xxxl))
+
+            // Stats Cards
+            if (state is AttendanceState.Success) {
+                val students = (state as AttendanceState.Success).students
+                AttendanceStatsRow(
+                    present = students.count { it.status == "present" },
+                    absent = students.count { it.status == "absent" },
+                    holiday = students.count { it.status == "holiday" },
+                    total = students.size
                 )
-                Text(
-                    "Manage your classroom records",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B),
-                    fontWeight = FontWeight.Medium
+                Spacer(Modifier.height(Spacing.xxl))
+            }
+
+            // Interactive Filters
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
+                // Class selector
+                Box(modifier = Modifier.weight(1f)) {
+                    ClassSelector(
+                        selectedClass = selectedClass,
+                        expanded = showClassDropdown,
+                        onExpandChange = { showClassDropdown = it },
+                        onSelect = {
+                            viewModel.setSelectedClass(it)
+                            showClassDropdown = false
+                        },
+                        allClasses = allClasses
+                    )
+                }
+
+                // Date selector
+                DateSelector(
+                    selectedDate = selectedDate,
+                    onDateSelected = { viewModel.setSelectedDate(it) },
+                    modifier = Modifier.weight(1f)
                 )
             }
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Edit Toggle Button
-                Button(
-                    onClick = { isEditing = !isEditing },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isEditing) Color(0xFF0F172A) else Color.White,
-                        contentColor = if (isEditing) Color.White else Color(0xFF475569)
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                    border = if (isEditing) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+
+            Spacer(Modifier.height(Spacing.xxl))
+
+            // List Header
+            if (state is AttendanceState.Success) {
+                ListHeader()
+                Spacer(Modifier.height(Spacing.sm))
+            }
+
+            // List
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (val s = state) {
+                    is AttendanceState.Loading -> LoadingState()
+                    is AttendanceState.Error -> ErrorState(s.message)
+                    is AttendanceState.Success -> {
+                        if (s.students.isEmpty()) {
+                            EmptyState(selectedClass)
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                                contentPadding = PaddingValues(bottom = Spacing.xxl)
+                            ) {
+                                items(s.students) { row ->
+                                    AttendanceRow(
+                                        row = row,
+                                        isEditing = isEditing,
+                                        onStatusChange = { viewModel.updateStatus(row.id, it) },
+                                        onSync = { viewModel.updateIndividualAttendance(row.id, row.status) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttendanceHeader(
+    isEditing: Boolean,
+    isSaving: Boolean,
+    canSave: Boolean,
+    onToggleEdit: () -> Unit,
+    onSave: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                "Daily Attendance",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Black,
+                color = AppColors.PrimaryText,
+                letterSpacing = (-0.8).sp,
+                lineHeight = 36.sp
+            )
+            Spacer(Modifier.height(Spacing.xs))
+            Text(
+                "Manage your classroom records",
+                fontSize = 14.sp,
+                color = AppColors.SecondaryText,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.1.sp
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            // Edit Toggle Button
+            FilledTonalButton(
+                onClick = onToggleEdit,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = if (isEditing) AppColors.PrimaryText else AppColors.Surface,
+                    contentColor = if (isEditing) AppColors.Surface else AppColors.SecondaryText
+                ),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.md),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 2.dp)
+            ) {
+                Icon(
+                    if (isEditing) FontAwesomeIcons.Solid.CheckCircle else FontAwesomeIcons.Solid.Edit,
+                    null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(Spacing.sm))
+                Text(
+                    if (isEditing) "Finishing" else "Edit Mode",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Save All Button
+            Button(
+                onClick = onSave,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.Accent,
+                    contentColor = Color.White,
+                    disabledContainerColor = AppColors.AccentLight,
+                    disabledContentColor = Color.White.copy(alpha = 0.7f)
+                ),
+                enabled = !isSaving && canSave,
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 6.dp),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.md)
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Icon(FontAwesomeIcons.Solid.CloudUploadAlt, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(Spacing.md))
+                    Text("Sync Records", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClassSelector(
+    selectedClass: String,
+    expanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onSelect: (String) -> Unit,
+    allClasses: List<String>
+) {
+    Surface(
+        onClick = { onExpandChange(true) },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = AppColors.Surface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md + 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(AppColors.Indigo.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        if (isEditing) FontAwesomeIcons.Solid.CheckCircle else FontAwesomeIcons.Solid.Edit,
+                        FontAwesomeIcons.Solid.GraduationCap,
                         null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
+                        tint = AppColors.Indigo
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(if (isEditing) "Finishing" else "Edit Mode", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
-
-                // Save All Button
-                Button(
-                    onClick = { viewModel.saveAttendance() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0D9488),
-                        disabledContainerColor = Color(0xFF99F6E4)
-                    ),
-                    enabled = !isSaving && state is AttendanceState.Success,
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
-                ) {
-                    if (isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                    } else {
-                        Icon(FontAwesomeIcons.Solid.CloudUploadAlt, null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(10.dp))
-                        Text("Sync Records", fontWeight = FontWeight.ExtraBold)
-                    }
-                }
+                Spacer(Modifier.width(Spacing.md))
+                Text(
+                    "Grade $selectedClass",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.PrimaryText
+                )
             }
-        }
-
-        // Stats Cards with Premium look
-        if (state is AttendanceState.Success) {
-            val students = (state as AttendanceState.Success).students
-            AttendanceStatsRow(
-                present = students.count { it.status == "present" },
-                absent = students.count { it.status == "absent" },
-                holiday = students.count { it.status == "holiday" },
-                total = students.size
+            Icon(
+                FontAwesomeIcons.Solid.ChevronDown,
+                null,
+                modifier = Modifier.size(12.dp),
+                tint = AppColors.TertiaryText
             )
-            Spacer(modifier = Modifier.height(28.dp))
         }
+    }
 
-        // Interactive Filters
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { onExpandChange(false) },
+        modifier = Modifier
+            .background(AppColors.Surface, RoundedCornerShape(12.dp))
+            .width(220.dp),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp
+    ) {
+        allClasses.forEach { cls ->
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        "Grade $cls",
+                        fontWeight = if (cls == selectedClass) FontWeight.Bold else FontWeight.Medium,
+                        color = if (cls == selectedClass) AppColors.Accent else AppColors.PrimaryText
+                    )
+                },
+                onClick = { onSelect(cls) },
+                modifier = Modifier.background(
+                    if (cls == selectedClass) AppColors.Accent.copy(alpha = 0.08f) else Color.Transparent
+                )
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateSelector(
+    selectedDate: String,
+    onDateSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date = Instant.fromEpochMilliseconds(millis)
+                            .toLocalDateTime(TimeZone.UTC).date
+                        onDateSelected(date.toString())
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", fontWeight = FontWeight.Bold, color = AppColors.Accent)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel", fontWeight = FontWeight.Medium)
+                }
+            },
+            shape = RoundedCornerShape(20.dp)
         ) {
-            // Class selector
-            Box(modifier = Modifier.weight(1f)) {
-                Surface(
-                    onClick = { showClassDropdown = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White,
-                    shadowElevation = 2.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(FontAwesomeIcons.Solid.GraduationCap, null, modifier = Modifier.size(16.dp), tint = Color(0xFF6366F1))
-                            Spacer(Modifier.width(12.dp))
-                            Text("Grade $selectedClass", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        }
-                        Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(12.dp), tint = Color.Gray)
-                    }
-                }
-
-                DropdownMenu(
-                    expanded = showClassDropdown,
-                    onDismissRequest = { showClassDropdown = false },
-                    modifier = Modifier.background(Color.White).width(200.dp)
-                ) {
-                    allClasses.forEach { cls ->
-                        DropdownMenuItem(
-                            text = { Text("Grade $cls", fontWeight = FontWeight.Medium) },
-                            onClick = {
-                                viewModel.setSelectedClass(cls)
-                                showClassDropdown = false
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // Date selector
-            var showDatePicker by remember { mutableStateOf(false) }
-            val datePickerState = rememberDatePickerState()
-
-            if (showDatePicker) {
-                DatePickerDialog(
-                    onDismissRequest = { showDatePicker = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            datePickerState.selectedDateMillis?.let { millis ->
-                                val date = Instant.fromEpochMilliseconds(millis)
-                                    .toLocalDateTime(TimeZone.UTC).date
-                                viewModel.setSelectedDate(date.toString())
-                            }
-                            showDatePicker = false
-                        }) { Text("OK") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
-                    }
-                ) {
-                    DatePicker(state = datePickerState)
-                }
-            }
-
-            Surface(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                color = Color.White,
-                shadowElevation = 2.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(FontAwesomeIcons.Solid.CalendarCheck, null, modifier = Modifier.size(16.dp), tint = Color(0xFFEC4899))
-                        Spacer(Modifier.width(12.dp))
-                        Text(selectedDate, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                    }
-                    Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(12.dp), tint = Color.Gray)
-                }
-            }
+            DatePicker(state = datePickerState)
         }
+    }
 
-        // List Header
-        if (state is AttendanceState.Success) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("STUDENT NAME", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
-                Text("STATUS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp, modifier = Modifier.padding(end = 50.dp))
+    Surface(
+        onClick = { showDatePicker = true },
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = AppColors.Surface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md + 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(AppColors.Pink.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        FontAwesomeIcons.Solid.CalendarCheck,
+                        null,
+                        modifier = Modifier.size(16.dp),
+                        tint = AppColors.Pink
+                    )
+                }
+                Spacer(Modifier.width(Spacing.md))
+                Text(
+                    selectedDate,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.PrimaryText
+                )
             }
+            Icon(
+                FontAwesomeIcons.Solid.ChevronDown,
+                null,
+                modifier = Modifier.size(12.dp),
+                tint = AppColors.TertiaryText
+            )
         }
+    }
+}
 
-        // List
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            when (val s = state) {
-                is AttendanceState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
-                is AttendanceState.Error -> Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(FontAwesomeIcons.Solid.ExclamationTriangle, null, tint = Color.Red, modifier = Modifier.size(48.dp))
-                    Spacer(Modifier.height(12.dp))
-                    Text(s.message, color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-                is AttendanceState.Success -> {
-                    if (s.students.isEmpty()) {
-                        Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(FontAwesomeIcons.Solid.UserFriends, null, tint = Color(0xFFCBD5E1), modifier = Modifier.size(64.dp))
-                            Spacer(Modifier.height(16.dp))
-                            Text("No students in Grade $selectedClass", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
-                        }
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(s.students) { row ->
-                                AttendanceRow(
-                                    row = row,
-                                    isEditing = isEditing,
-                                    onStatusChange = { viewModel.updateStatus(row.id, it) },
-                                    onSync = { viewModel.updateIndividualAttendance(row.id, row.status) }
-                                )
-                            }
-                        }
-                    }
-                }
+@Composable
+private fun ListHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.sm),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            "STUDENT NAME",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = AppColors.TertiaryText,
+            letterSpacing = 1.2.sp
+        )
+        Text(
+            "STATUS",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = AppColors.TertiaryText,
+            letterSpacing = 1.2.sp,
+            modifier = Modifier.padding(end = 60.dp)
+        )
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(
+                color = AppColors.Accent,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(Modifier.height(Spacing.lg))
+            Text(
+                "Loading students...",
+                color = AppColors.SecondaryText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorState(message: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(AppColors.AbsentBg),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    FontAwesomeIcons.Solid.ExclamationTriangle,
+                    null,
+                    tint = AppColors.Absent,
+                    modifier = Modifier.size(32.dp)
+                )
             }
+            Spacer(Modifier.height(Spacing.lg))
+            Text(
+                message,
+                color = AppColors.Absent,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(selectedClass: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(AppColors.Border),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    FontAwesomeIcons.Solid.UserFriends,
+                    null,
+                    tint = AppColors.TertiaryText,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+            Spacer(Modifier.height(Spacing.lg))
+            Text(
+                "No students in Grade $selectedClass",
+                color = AppColors.SecondaryText,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
+            )
+            Spacer(Modifier.height(Spacing.xs))
+            Text(
+                "Try selecting a different grade",
+                color = AppColors.TertiaryText,
+                fontSize = 13.sp
+            )
         }
     }
 }
 
 @Composable
 fun AttendanceStatsRow(present: Int, absent: Int, holiday: Int, total: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-        StatMiniCard("PRESENT", present.toString(), Color(0xFF10B981), FontAwesomeIcons.Solid.Check, Color(0xFFD1FAE5), Modifier.weight(1f))
-        StatMiniCard("ABSENT", absent.toString(), Color(0xFFEF4444), FontAwesomeIcons.Solid.Times, Color(0xFFFEE2E2), Modifier.weight(1f))
-        StatMiniCard("HOLIDAY", holiday.toString(), Color(0xFF8B5CF6), FontAwesomeIcons.Solid.UmbrellaBeach, Color(0xFFEDE9FE), Modifier.weight(1f))
-        StatMiniCard("TOTAL", total.toString(), Color(0xFF3B82F6), FontAwesomeIcons.Solid.Users, Color(0xFFDBEAFE), Modifier.weight(1f))
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.fillMaxWidth()) {
+        StatMiniCard("PRESENT", present.toString(), AppColors.Present, FontAwesomeIcons.Solid.Check, AppColors.PresentBg, Modifier.weight(1f))
+        StatMiniCard("ABSENT", absent.toString(), AppColors.Absent, FontAwesomeIcons.Solid.Times, AppColors.AbsentBg, Modifier.weight(1f))
+        StatMiniCard("HOLIDAY", holiday.toString(), AppColors.Holiday, FontAwesomeIcons.Solid.UmbrellaBeach, AppColors.HolidayBg, Modifier.weight(1f))
+        StatMiniCard("TOTAL", total.toString(), AppColors.Total, FontAwesomeIcons.Solid.Users, AppColors.TotalBg, Modifier.weight(1f))
     }
 }
 
 @Composable
-fun StatMiniCard(label: String, value: String, color: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, bgColor: Color, modifier: Modifier = Modifier) {
+fun StatMiniCard(label: String, value: String, color: Color, icon: ImageVector, bgColor: Color, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, AppColors.Border)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
-                    modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(bgColor),
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(bgColor),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, null, modifier = Modifier.size(14.dp), tint = color)
+                    Icon(icon, null, modifier = Modifier.size(16.dp), tint = color)
                 }
-                Text(label, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF94A3B8))
+                Text(
+                    label,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = AppColors.TertiaryText,
+                    letterSpacing = 1.sp
+                )
             }
-            Spacer(Modifier.height(12.dp))
-            Text(value, fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+            Spacer(Modifier.height(Spacing.md))
+            Text(
+                value,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                color = AppColors.PrimaryText,
+                letterSpacing = (-0.5).sp
+            )
         }
     }
 }
@@ -296,58 +588,90 @@ fun StatMiniCard(label: String, value: String, color: Color, icon: androidx.comp
 fun AttendanceRow(row: AttendanceStudentRow, isEditing: Boolean, onStatusChange: (String) -> Unit, onSync: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        shadowElevation = 1.dp
+        shape = RoundedCornerShape(18.dp),
+        color = AppColors.Surface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
         ) {
             // Premium Initials Avatar
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(
-                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                            colors = listOf(Color(0xFF6366F1), Color(0xFF4F46E5))
+                        brush = Brush.linearGradient(
+                            colors = listOf(AppColors.Indigo, AppColors.IndigoDark)
                         )
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     row.name.split(" ").mapNotNull { it.firstOrNull()?.toString() }.joinToString("").take(2).uppercase(),
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color.White
+                    color = Color.White,
+                    letterSpacing = 0.5.sp
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(row.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF0F172A))
+                Text(
+                    row.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = AppColors.PrimaryText,
+                    letterSpacing = (-0.2).sp
+                )
+                Spacer(Modifier.height(Spacing.xs))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Roll: ${row.rollNumber}", fontSize = 12.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
-                    Spacer(Modifier.width(8.dp))
-                    Box(Modifier.size(3.dp).clip(CircleShape).background(Color(0xFFCBD5E1)))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Scholar: ${row.scholarNo}", fontSize = 12.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
+                    Text(
+                        "Roll: ${row.rollNumber}",
+                        fontSize = 12.sp,
+                        color = AppColors.SecondaryText,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.width(Spacing.sm))
+                    Box(
+                        Modifier
+                            .size(3.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.Border)
+                    )
+                    Spacer(Modifier.width(Spacing.sm))
+                    Text(
+                        "Scholar: ${row.scholarNo}",
+                        fontSize = 12.sp,
+                        color = AppColors.SecondaryText,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatusButton("P", "present", row.status == "present", Color(0xFF10B981), onStatusChange)
-                StatusButton("A", "absent", row.status == "absent", Color(0xFFEF4444), onStatusChange)
-                StatusButton("H", "holiday", row.status == "holiday", Color(0xFF8B5CF6), onStatusChange)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm + 2.dp)) {
+                StatusButton("P", "present", row.status == "present", AppColors.Present, onStatusChange)
+                StatusButton("A", "absent", row.status == "absent", AppColors.Absent, onStatusChange)
+                StatusButton("H", "holiday", row.status == "holiday", AppColors.Holiday, onStatusChange)
             }
 
             if (isEditing) {
                 IconButton(
                     onClick = onSync,
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFF1F5F9))
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.Accent.copy(alpha = 0.1f))
                 ) {
-                    Icon(FontAwesomeIcons.Solid.SyncAlt, null, modifier = Modifier.size(14.dp), tint = Color(0xFF0D9488))
+                    Icon(
+                        FontAwesomeIcons.Solid.SyncAlt,
+                        null,
+                        modifier = Modifier.size(15.dp),
+                        tint = AppColors.Accent
+                    )
                 }
             }
         }
@@ -356,17 +680,34 @@ fun AttendanceRow(row: AttendanceStudentRow, isEditing: Boolean, onStatusChange:
 
 @Composable
 fun StatusButton(label: String, status: String, isSelected: Boolean, color: Color, onClick: (String) -> Unit) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) color else AppColors.Background,
+        animationSpec = tween(200),
+        label = "statusBg"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else AppColors.SecondaryText,
+        animationSpec = tween(200),
+        label = "statusContent"
+    )
+
     Surface(
         modifier = Modifier
-            .size(38.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .size(40.dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable { onClick(status) },
-        color = if (isSelected) color else Color(0xFFF8FAFC),
-        contentColor = if (isSelected) Color.White else Color(0xFF64748B),
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+        color = backgroundColor,
+        contentColor = contentColor,
+        border = if (isSelected) null else BorderStroke(1.dp, AppColors.Border),
+        shadowElevation = if (isSelected) 2.dp else 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(label, fontWeight = FontWeight.Black, fontSize = 13.sp)
+            Text(
+                label,
+                fontWeight = FontWeight.Black,
+                fontSize = 14.sp,
+                letterSpacing = 0.3.sp
+            )
         }
     }
 }
