@@ -34,118 +34,146 @@ fun GradeScreen(viewModel: GradeViewModel) {
     val grades = listOf("Nursery", "LKG", "UKG") + (1..12).map { it.toString() }
     val subjects = listOf("Mathematics", "Science", "English", "Hindi", "Social Science")
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
-            .padding(16.dp)
-    ) {
-        // Premium Header
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF0FDFA)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(FontAwesomeIcons.Solid.ClipboardCheck, null, modifier = Modifier.size(24.dp), tint = Color(0xFF0D9488))
-            }
-            Column {
-                Text("Grade Entry", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                Text("Select filters to fill student marks", fontSize = 13.sp, color = Color(0xFF64748B))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 5-Step Filter Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+        val isCompact = maxWidth < 600.dp
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(if (isCompact) 12.dp else 24.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Step 1: Teacher
-                GradeFilterRow("Step 1: Teacher") {
-                    GradeDropdown(
-                        label = teachers.find { it.id == selectedTeacherId }?.fullName ?: "Select Teacher",
-                        items = teachers.map { it.fullName },
-                        onSelect = { name -> teachers.find { it.fullName == name }?.let { viewModel.setSelectedTeacher(it.id) } }
-                    )
+            // Premium Header - Responsive
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(if (isCompact) 12.dp else 16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier.size(if (isCompact) 40.dp else 56.dp).clip(RoundedCornerShape(if (isCompact) 10.dp else 14.dp)).background(Color(0xFFF0FDFA)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FontAwesomeIcons.Solid.ClipboardCheck, null, modifier = Modifier.size(if (isCompact) 20.dp else 28.dp), tint = Color(0xFF0D9488))
                 }
-
-                // Step 2: Type
-                GradeFilterRow("Step 2: Type") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(selected = activeTab == "test", onClick = { viewModel.setActiveTab("test") }, label = { Text("Test") })
-                        FilterChip(selected = activeTab == "exam", onClick = { viewModel.setActiveTab("exam") }, label = { Text("Exam") })
-                    }
-                }
-
-                // Step 3: Exam Name
-                GradeFilterRow("Step 3: Name") {
-                    GradeDropdown(
-                        label = selectedExamName ?: "Select ${activeTab.replaceFirstChar { it.uppercase() }}",
-                        items = examNames,
-                        onSelect = { viewModel.setSelectedExam(it) }
-                    )
-                }
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Step 4: Class
-                    Box(modifier = Modifier.weight(1f)) {
-                        GradeFilterRow("Step 4: Class") {
-                            GradeDropdown(
-                                label = if (selectedClass != null) "Grade $selectedClass" else "Select Class",
-                                items = grades,
-                                onSelect = { viewModel.setSelectedClass(it) }
-                            )
-                        }
-                    }
-                    // Step 5: Subject
-                    Box(modifier = Modifier.weight(1f)) {
-                        GradeFilterRow("Step 5: Subject") {
-                            GradeDropdown(
-                                label = selectedSubject ?: "Select Subject",
-                                items = subjects,
-                                onSelect = { viewModel.setSelectedSubject(it) }
-                            )
-                        }
-                    }
+                Column {
+                    Text("Grade Entry", fontSize = if (isCompact) 22.sp else 28.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+                    Text("Fill student marks", fontSize = 13.sp, color = Color(0xFF64748B))
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(if (isCompact) 16.dp else 24.dp))
 
-        // Student Table
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            if (selectedSubject == null) {
-                Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(FontAwesomeIcons.Solid.ClipboardList, null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
-                    Text("Complete all steps to enter marks", color = Color.Gray, fontSize = 14.sp)
-                }
-            } else {
-                when (val s = state) {
-                    is GradeState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
-                    is GradeState.Error -> Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
-                    is GradeState.Success -> {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text("STUDENT LIST (${s.students.size})", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B), letterSpacing = 1.sp)
-                                Button(
-                                    onClick = { viewModel.saveGrades() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                                    enabled = !isSaving,
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                                ) {
-                                    if (isSaving) CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White)
-                                    else Text("Save All Marks", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            // 5-Step Filter Card - Responsive
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(if (isCompact) 16.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Step 1: Teacher
+                    GradeFilterRow("Step 1: Teacher") {
+                        GradeDropdown(
+                            label = teachers.find { it.id == selectedTeacherId }?.fullName ?: "Select Teacher",
+                            items = teachers.map { it.fullName },
+                            onSelect = { name -> teachers.find { it.fullName == name }?.let { viewModel.setSelectedTeacher(it.id) } }
+                        )
+                    }
+
+                    // Step 2: Type
+                    GradeFilterRow("Step 2: Type") {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = activeTab == "test", onClick = { viewModel.setActiveTab("test") }, label = { Text("Test") })
+                            FilterChip(selected = activeTab == "exam", onClick = { viewModel.setActiveTab("exam") }, label = { Text("Exam") })
+                        }
+                    }
+
+                    // Step 3: Exam Name
+                    GradeFilterRow("Step 3: Name") {
+                        GradeDropdown(
+                            label = selectedExamName ?: "Select ${activeTab.replaceFirstChar { it.uppercase() }}",
+                            items = examNames,
+                            onSelect = { viewModel.setSelectedExam(it) }
+                        )
+                    }
+
+                    if (isCompact) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            GradeFilterRow("Step 4: Class") {
+                                GradeDropdown(
+                                    label = if (selectedClass != null) "Grade $selectedClass" else "Select Class",
+                                    items = grades,
+                                    onSelect = { viewModel.setSelectedClass(it) }
+                                )
+                            }
+                            GradeFilterRow("Step 5: Subject") {
+                                GradeDropdown(
+                                    label = selectedSubject ?: "Select Subject",
+                                    items = subjects,
+                                    onSelect = { viewModel.setSelectedSubject(it) }
+                                )
+                            }
+                        }
+                    } else {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                GradeFilterRow("Step 4: Class") {
+                                    GradeDropdown(
+                                        label = if (selectedClass != null) "Grade $selectedClass" else "Select Class",
+                                        items = grades,
+                                        onSelect = { viewModel.setSelectedClass(it) }
+                                    )
                                 }
                             }
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(s.students) { row ->
-                                    GradeRow(row, onMarksChange = { viewModel.updateMarks(row.studentId, it) })
+                            Box(modifier = Modifier.weight(1f)) {
+                                GradeFilterRow("Step 5: Subject") {
+                                    GradeDropdown(
+                                        label = selectedSubject ?: "Select Subject",
+                                        items = subjects,
+                                        onSelect = { viewModel.setSelectedSubject(it) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(if (isCompact) 16.dp else 24.dp))
+
+            // Student Table
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                if (selectedSubject == null) {
+                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(FontAwesomeIcons.Solid.ClipboardList, null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
+                        Text("Complete steps to enter marks", color = Color.Gray, fontSize = 14.sp)
+                    }
+                } else {
+                    when (val s = state) {
+                        is GradeState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
+                        is GradeState.Error -> Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
+                        is GradeState.Success -> {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("STUDENT LIST (${s.students.size})", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF64748B), letterSpacing = 1.sp)
+                                    Button(
+                                        onClick = { viewModel.saveGrades() },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                                        enabled = !isSaving,
+                                        shape = RoundedCornerShape(10.dp),
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                    ) {
+                                        if (isSaving) CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                                        else Text("Save Marks", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+                                    items(s.students) { row ->
+                                        GradeRow(row, onMarksChange = { viewModel.updateMarks(row.studentId, it) })
+                                    }
                                 }
                             }
                         }

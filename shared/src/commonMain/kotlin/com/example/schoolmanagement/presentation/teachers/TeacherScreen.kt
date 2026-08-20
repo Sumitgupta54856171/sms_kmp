@@ -33,71 +33,93 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
     val isAddDialogOpen by viewModel.isAddDialogOpen.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
-            .padding(16.dp)
-    ) {
-        // Premium Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+        val isCompact = maxWidth < 600.dp
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(if (isCompact) 12.dp else 24.dp)
         ) {
-            Column {
-                Text("Teachers Management", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                Text("Manage faculty members, schedules, and assignments", fontSize = 14.sp, color = Color(0xFF64748B))
+            // Premium Header - Responsive
+            if (isCompact) {
+                Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    Text("Teachers", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+                    Text("Manage faculty members", fontSize = 13.sp, color = Color(0xFF64748B))
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.setAddDialogOpen(true) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add Teacher", fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Teachers Management", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+                        Text("Manage faculty members, schedules, and assignments", fontSize = 14.sp, color = Color(0xFF64748B))
+                    }
+                    
+                    Button(
+                        onClick = { viewModel.setAddDialogOpen(true) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add Teacher", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
-            
-            Button(
-                onClick = { viewModel.setAddDialogOpen(true) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
+                modifier = Modifier.fillMaxWidth().padding(bottom = if (isCompact) 16.dp else 24.dp).shadow(2.dp, RoundedCornerShape(12.dp)),
+                placeholder = { Text("Search by name, ID, or email...", color = Color.Gray, fontSize = 14.sp) },
                 shape = RoundedCornerShape(12.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-            ) {
-                Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Add Teacher", fontWeight = FontWeight.Bold)
-            }
-        }
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = Color(0xFF0D9488)
+                ),
+                leadingIcon = { Icon(FontAwesomeIcons.Solid.Search, null, modifier = Modifier.size(18.dp), tint = Color.Gray) }
+            )
 
-        // Search Bar with shadow
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { viewModel.onSearchQueryChange(it) },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp).shadow(2.dp, RoundedCornerShape(12.dp)),
-            placeholder = { Text("Search by name, ID, or email...", color = Color.Gray) },
-            shape = RoundedCornerShape(12.dp),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF0D9488)
-            ),
-            leadingIcon = { Icon(FontAwesomeIcons.Solid.Search, null, modifier = Modifier.size(18.dp), tint = Color.Gray) }
-        )
-
-        // Grid List
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            when (val s = state) {
-                is TeacherListState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
-                is TeacherListState.Error -> Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
-                is TeacherListState.Success -> {
-                    if (s.teachers.isEmpty()) {
-                        EmptyTeachersView()
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 280.dp),
-                            horizontalArrangement = Arrangement.spacedBy(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(20.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(s.teachers) { teacher ->
-                                TeacherGridCard(
-                                    teacher = teacher,
-                                    onDelete = { viewModel.deleteTeacher(teacher.id) }
-                                )
+            // Grid List
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (val s = state) {
+                    is TeacherListState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
+                    is TeacherListState.Error -> Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
+                    is TeacherListState.Success -> {
+                        if (s.teachers.isEmpty()) {
+                            EmptyTeachersView()
+                        } else {
+                            LazyVerticalGrid(
+                                columns = if (isCompact) GridCells.Fixed(1) else GridCells.Adaptive(minSize = 300.dp),
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(s.teachers) { teacher ->
+                                    TeacherGridCard(
+                                        teacher = teacher,
+                                        onDelete = { viewModel.deleteTeacher(teacher.id) }
+                                    )
+                                }
                             }
                         }
                     }

@@ -24,11 +24,14 @@ class InvoiceHistoryViewModel(private val repository: OperationsRepository) : Vi
     private val _state = MutableStateFlow<InvoiceHistoryState>(InvoiceHistoryState.Loading)
     val state: StateFlow<InvoiceHistoryState> = _state.asStateFlow()
 
-    private val _startDate = MutableStateFlow(getCurrentDateStr())
+    private val _startDate = MutableStateFlow(getFirstDayOfMonthStr())
     val startDate: StateFlow<String> = _startDate.asStateFlow()
 
     private val _endDate = MutableStateFlow(getCurrentDateStr())
     val endDate: StateFlow<String> = _endDate.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     init {
         loadInvoices()
@@ -40,6 +43,17 @@ class InvoiceHistoryViewModel(private val repository: OperationsRepository) : Vi
         val month = now.monthNumber.toString().padStart(2, '0')
         val day = now.dayOfMonth.toString().padStart(2, '0')
         return "${now.year}-$month-$day"
+    }
+
+    private fun getFirstDayOfMonthStr(): String {
+        val currentMoment = Instant.fromEpochMilliseconds(getCurrentEpochMillis())
+        val now = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+        val month = now.monthNumber.toString().padStart(2, '0')
+        return "${now.year}-$month-01"
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
     }
 
     fun setDateRange(start: String, end: String) {

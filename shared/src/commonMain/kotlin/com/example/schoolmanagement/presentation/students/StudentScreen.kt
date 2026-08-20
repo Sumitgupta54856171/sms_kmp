@@ -30,51 +30,85 @@ fun StudentScreen(
     val isAddDialogOpen by viewModel.isAddStudentDialogOpen.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
-            .padding(16.dp)
-    ) {
-        // Toolbar
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+        val isCompact = maxWidth < 600.dp
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(if (isCompact) 12.dp else 24.dp)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChange(it) },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Search by name or scholar no...") },
-                shape = RoundedCornerShape(8.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-            
-            Button(
-                onClick = { viewModel.setAddStudentDialogOpen(true) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("+ Add Student")
+            // Toolbar
+            if (isCompact) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.onSearchQueryChange(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search students...") },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        )
+                    )
+                    
+                    Button(
+                        onClick = { viewModel.setAddStudentDialogOpen(true) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Text("+ Add Student", fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.onSearchQueryChange(it) },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Search by name or scholar no...") },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        )
+                    )
+                    
+                    Button(
+                        onClick = { viewModel.setAddStudentDialogOpen(true) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Text("+ Add Student", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
-        }
 
-        // Content
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            when (val s = state) {
-                is StudentListState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
-                }
-                is StudentListState.Error -> {
-                    Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
-                }
-                is StudentListState.Success -> {
-                    StudentTable(s.students, onStudentClick = onStudentClick)
+            // Content
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (val s = state) {
+                    is StudentListState.Loading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF0D9488))
+                    }
+                    is StudentListState.Error -> {
+                        Text(s.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
+                    }
+                    is StudentListState.Success -> {
+                        StudentTable(s.students, onStudentClick = onStudentClick)
+                    }
                 }
             }
         }

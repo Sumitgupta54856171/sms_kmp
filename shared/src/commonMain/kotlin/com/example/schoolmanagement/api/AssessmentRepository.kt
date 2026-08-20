@@ -39,7 +39,16 @@ class AssessmentRepository(private val ktorClient: KtorClient) {
     suspend fun fetchExamNames(): Result<List<String>> {
         return try {
             val response = ktorClient.client.get("/api/v1/timetable/examName")
-            // Parse response which is a list of strings
+            val names = response.parseList<String>()
+            Result.success(names)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchTestNames(): Result<List<String>> {
+        return try {
+            val response = ktorClient.client.get("/api/v1/timetable/test/testName")
             val names = response.parseList<String>()
             Result.success(names)
         } catch (e: Exception) {
@@ -50,6 +59,16 @@ class AssessmentRepository(private val ktorClient: KtorClient) {
     suspend fun fetchExamTimetable(name: String): Result<List<ExamTimetableEntry>> {
         return try {
             val response = ktorClient.client.get("/api/v1/timetable/examByName/$name")
+            val entries = response.parseList<ExamTimetableEntry>()
+            Result.success(entries)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchTestTimetable(name: String): Result<List<ExamTimetableEntry>> {
+        return try {
+            val response = ktorClient.client.get("/api/v1/timetable/test/testByName/$name")
             val entries = response.parseList<ExamTimetableEntry>()
             Result.success(entries)
         } catch (e: Exception) {

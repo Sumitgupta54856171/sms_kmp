@@ -10,10 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.schoolmanagement.api.KtorClient
 import com.example.schoolmanagement.auth.AuthRepository
 import com.example.schoolmanagement.auth.TokenManager
-import com.example.schoolmanagement.presentation.MainScaffold
 import com.example.schoolmanagement.presentation.auth.LoginScreen
 import com.example.schoolmanagement.presentation.auth.LoginViewModel
 import com.example.schoolmanagement.presentation.dashboard.DashboardScreen
@@ -50,166 +50,216 @@ fun App() {
     val operationsRepository = remember { OperationsRepository(ktorClient) }
     val sessionRepository = remember { SessionRepository(ktorClient) }
 
-    // ViewModels
-    val loginViewModel = remember { LoginViewModel(authRepository) }
-    val dashboardViewModel = remember { DashboardViewModel(dashboardRepository) }
-    val studentViewModel = remember { StudentViewModel(studentRepository) }
-    val studentProfileViewModel = remember { StudentProfileViewModel(studentRepository) }
-    val feeViewModel = remember { FeeViewModel(feeRepository) }
-    val feeProfileViewModel = remember { FeeProfileViewModel(feeRepository) }
-    val teacherViewModel = remember { TeacherViewModel(teacherRepository) }
-    val timetableViewModel = remember { TimetableViewModel(academicRepository) }
-    val attendanceViewModel = remember { AttendanceViewModel(attendanceRepository, studentRepository) }
-    val attendanceSummaryViewModel = remember { AttendanceSummaryViewModel(attendanceRepository) }
-    val examViewModel = remember { ExamViewModel(assessmentRepository) }
-    val gradeViewModel = remember { GradeViewModel(assessmentRepository, studentRepository, teacherRepository) }
-    val tcViewModel = remember { TCViewModel(studentRepository) }
-    val enrollmentViewModel = remember { EnrollmentViewModel(operationsRepository, studentRepository) }
-    val invoiceHistoryViewModel = remember { InvoiceHistoryViewModel(operationsRepository) }
-    val loginGenerateViewModel = remember { LoginGenerateViewModel(operationsRepository, studentRepository) }
-    
-    val sessionViewModel = remember { 
-        SessionViewModel(sessionRepository, tokenManager) {
-            dashboardViewModel.loadDashboardData()
-        }
-    }
-    
-    val navController = rememberNavController()
-    var isSidebarVisible by remember { mutableStateOf(true) }
-
-    // State for temporary student data during navigation
+    // Shared state for temporary student data during navigation
     var selectedFeeStudent by remember { mutableStateOf<StudentListItem?>(null) }
     var shouldOpenPayDialog by remember { mutableStateOf(false) }
     var selectedProfileStudentId by remember { mutableStateOf<Int?>(null) }
+    var isSidebarVisible by remember { mutableStateOf(true) }
+
+    val navController = rememberNavController()
+
+    // Global session ViewModel should stay at root
+    val sessionViewModel = remember { 
+        SessionViewModel(sessionRepository, tokenManager) {
+            // Callback for session change
+        }
+    }
 
     MaterialTheme {
-        NavHost(
-            navController = navController,
-            startDestination = if (authRepository.isLoggedIn()) "authenticated" else "login"
-        ) {
-            composable("login") {
-                LoginScreen(
-                    viewModel = loginViewModel,
-                    onLoginSuccess = {
-                        navController.navigate("authenticated") {
-                            popUpTo("login") { inclusive = true }
+        val currentBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = currentBackStackEntry?.destination?.route ?: "login"
+        
+        val authenticatedRoutes = listOf(
+            "dashboard", "students", "teachers", "class", "subjects",
+            "elective-subject", "timetable", "lesson-plans", "attendance",
+            "attendance/summary", "timetable/exams", "grades", "fees",
+            "fees/invoice-history", "fees/structure", "tc", "enrollment", "login-generate",
+            "fees-profile", "student-profile"
+        )
+        
+        val isAuthRoute = authenticatedRoutes.contains(currentRoute)
+
+        if (isAuthRoute) {
+            com.example.schoolmanagement.presentation.MainScaffold(
+                currentRoute = currentRoute,
+                onNavigate = { target: String ->
+                    if (target != currentRoute) {
+                        navController.navigate(target) {
+                            launchSingleTop = true
                         }
                     }
+                },
+                userName = tokenManager.getUserName() ?: "User",
+                userRole = tokenManager.getUserRole() ?: "Staff",
+                onLogout = {
+                    authRepository.logout()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                isSidebarVisible = isSidebarVisible,
+                onToggleSidebar = { isSidebarVisible = !isSidebarVisible },
+                sessionViewModel = sessionViewModel
+            ) {
+                AuthenticatedNavHost(
+                    navController = navController,
+                    dashboardRepository = dashboardRepository,
+                    studentRepository = studentRepository,
+                    teacherRepository = teacherRepository,
+                    academicRepository = academicRepository,
+                    attendanceRepository = attendanceRepository,
+                    assessmentRepository = assessmentRepository,
+                    operationsRepository = operationsRepository,
+                    feeRepository = feeRepository,
+                    selectedProfileStudentId = selectedProfileStudentId,
+                    onStudentSelected = { selectedProfileStudentId = it },
+                    selectedFeeStudent = selectedFeeStudent,
+                    onFeeStudentSelected = { selectedFeeStudent = it },
+                    shouldOpenPayDialog = shouldOpenPayDialog,
+                    onPayDialogChange = { shouldOpenPayDialog = it }
                 )
             }
-            
-            composable("authenticated") {
-                LaunchedEffect(Unit) {
-                    navController.navigate("dashboard") {
-                        popUpTo("authenticated") { inclusive = true }
-                    }
-                }
-            }
-
-            val authenticatedRoutes = listOf(
-                "dashboard", "students", "teachers", "class", "subjects",
-                "elective-subject", "timetable", "lesson-plans", "attendance",
-                "attendance/summary", "timetable/exams", "grades", "fees",
-                "fees/invoice-history", "fees/structure", "tc", "enrollment", "login-generate",
-                "fees-profile", "student-profile"
-            )
-
-            authenticatedRoutes.forEach { route ->
-                composable(route) {
-                    MainScaffold(
-                        currentRoute = route,
-                        onNavigate = { target ->
-                            if (target != route) {
-                                navController.navigate(target) {
-                                    launchSingleTop = true
-                                }
-                            }
-                        },
-                        userName = tokenManager.getUserName() ?: "User",
-                        userRole = tokenManager.getUserRole() ?: "Staff",
-                        onLogout = {
-                            authRepository.logout()
-                            navController.navigate("login") {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
-                        isSidebarVisible = isSidebarVisible,
-                        onToggleSidebar = { isSidebarVisible = !isSidebarVisible },
-                        sessionViewModel = sessionViewModel
-                    ) {
-                        when (route) {
-                            "dashboard" -> DashboardScreen(dashboardViewModel, onNavigate = { target ->
-                                if (target != route) {
-                                    navController.navigate(target) {
-                                        launchSingleTop = true
-                                    }
-                                }
-                            })
-                            "students" -> StudentScreen(
-                                viewModel = studentViewModel,
-                                onStudentClick = { student ->
-                                    selectedProfileStudentId = student.id ?: student.studentId
-                                    studentProfileViewModel.loadStudentProfile(selectedProfileStudentId!!)
-                                    navController.navigate("student-profile")
-                                }
-                            )
-                            "student-profile" -> {
-                                val profileId = selectedProfileStudentId
-                                if (profileId != null) {
-                                    StudentProfileScreen(
-                                        studentId = profileId,
-                                        viewModel = studentProfileViewModel,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                } else {
-                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                        Text("No student selected")
-                                    }
-                                }
-                            }
-                            "teachers" -> TeacherScreen(teacherViewModel)
-                            "class" -> ClasspageScreen(onClassClick = { /* Handle class click */ })
-                            "timetable" -> TimetableScreen(timetableViewModel)
-                            "attendance" -> AttendanceScreen(attendanceViewModel)
-                            "attendance/summary" -> AttendanceSummaryScreen(attendanceSummaryViewModel)
-                            "timetable/exams" -> ExamScreen(examViewModel)
-                            "grades" -> GradeScreen(gradeViewModel)
-                            "tc" -> TCScreen(tcViewModel)
-                            "enrollment" -> EnrollmentScreen(enrollmentViewModel)
-                            "fees/invoice-history" -> InvoiceHistoryScreen(invoiceHistoryViewModel)
-                            "login-generate" -> LoginGenerateScreen(loginGenerateViewModel)
-                            "fees" -> FeeScreen(
-                                viewModel = feeViewModel,
-                                onViewFees = { student ->
-                                    selectedFeeStudent = student
-                                    shouldOpenPayDialog = false
-                                    navController.navigate("fees-profile")
-                                },
-                                onPayFees = { student ->
-                                    selectedFeeStudent = student
-                                    shouldOpenPayDialog = true
-                                    navController.navigate("fees-profile")
-                                }
-                            )
-                            "fees-profile" -> {
-                                selectedFeeStudent?.let { student ->
-                                    FeeProfileScreen(
-                                        student = student,
-                                        viewModel = feeProfileViewModel,
-                                        initialShowPayDialog = shouldOpenPayDialog,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("No student selected")
-                                }
-                            }
-                            else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Screen: $route", style = MaterialTheme.typography.headlineMedium)
+        } else {
+            NavHost(
+                navController = navController,
+                startDestination = if (authRepository.isLoggedIn()) "dashboard" else "login"
+            ) {
+                composable("login") {
+                    val loginViewModel = remember { LoginViewModel(authRepository) }
+                    LoginScreen(
+                        viewModel = loginViewModel,
+                        onLoginSuccess = {
+                            navController.navigate("dashboard") {
+                                popUpTo("login") { inclusive = true }
                             }
                         }
-                    }
+                    )
                 }
+                // Placeholder to allow navigation to dashboard which will then trigger the AuthenticatedNavHost
+                composable("dashboard") { Box(Modifier.fillMaxSize()) }
             }
         }
+    }
+}
+
+@Composable
+fun AuthenticatedNavHost(
+    navController: androidx.navigation.NavHostController,
+    dashboardRepository: DashboardRepository,
+    studentRepository: StudentRepository,
+    teacherRepository: TeacherRepository,
+    academicRepository: AcademicRepository,
+    attendanceRepository: AttendanceRepository,
+    assessmentRepository: AssessmentRepository,
+    operationsRepository: OperationsRepository,
+    feeRepository: FeeRepository,
+    selectedProfileStudentId: Int?,
+    onStudentSelected: (Int?) -> Unit,
+    selectedFeeStudent: StudentListItem?,
+    onFeeStudentSelected: (StudentListItem?) -> Unit,
+    shouldOpenPayDialog: Boolean,
+    onPayDialogChange: (Boolean) -> Unit
+) {
+    NavHost(
+        navController = navController,
+        startDestination = "dashboard",
+        modifier = Modifier.fillMaxSize()
+    ) {
+        composable("dashboard") {
+            val viewModel = remember { DashboardViewModel(dashboardRepository) }
+            DashboardScreen(viewModel, onNavigate = { target ->
+                navController.navigate(target) { launchSingleTop = true }
+            })
+        }
+        composable("students") {
+            val viewModel = remember { StudentViewModel(studentRepository) }
+            StudentScreen(
+                viewModel = viewModel,
+                onStudentClick = { student ->
+                    onStudentSelected(student.id ?: student.studentId)
+                    navController.navigate("student-profile")
+                }
+            )
+        }
+        composable("student-profile") {
+            val profileId = selectedProfileStudentId
+            if (profileId != null) {
+                val viewModel = remember { StudentProfileViewModel(studentRepository) }
+                StudentProfileScreen(
+                    studentId = profileId,
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+        }
+        composable("teachers") { 
+            val viewModel = remember { TeacherViewModel(teacherRepository) }
+            TeacherScreen(viewModel) 
+        }
+        composable("class") { ClasspageScreen(onClassClick = { }) }
+        composable("timetable") { 
+            val viewModel = remember { TimetableViewModel(academicRepository) }
+            TimetableScreen(viewModel) 
+        }
+        composable("attendance") { 
+            val viewModel = remember { AttendanceViewModel(attendanceRepository, studentRepository) }
+            AttendanceScreen(viewModel) 
+        }
+        composable("attendance/summary") { 
+            val viewModel = remember { AttendanceSummaryViewModel(attendanceRepository) }
+            AttendanceSummaryScreen(viewModel) 
+        }
+        composable("timetable/exams") { 
+            val viewModel = remember { ExamViewModel(assessmentRepository) }
+            ExamScreen(viewModel) 
+        }
+        composable("grades") { 
+            val viewModel = remember { GradeViewModel(assessmentRepository, studentRepository, teacherRepository) }
+            GradeScreen(viewModel) 
+        }
+        composable("tc") { 
+            val viewModel = remember { TCViewModel(studentRepository) }
+            TCScreen(viewModel) 
+        }
+        composable("enrollment") { 
+            val viewModel = remember { EnrollmentViewModel(operationsRepository, studentRepository) }
+            EnrollmentScreen(viewModel) 
+        }
+        composable("fees/invoice-history") { 
+            val viewModel = remember { InvoiceHistoryViewModel(operationsRepository) }
+            InvoiceHistoryScreen(viewModel) 
+        }
+        composable("login-generate") { 
+            val viewModel = remember { LoginGenerateViewModel(operationsRepository, studentRepository) }
+            LoginGenerateScreen(viewModel) 
+        }
+        composable("fees") {
+            val viewModel = remember { FeeViewModel(feeRepository) }
+            FeeScreen(
+                viewModel = viewModel,
+                onViewFees = { student ->
+                    onFeeStudentSelected(student)
+                    onPayDialogChange(false)
+                    navController.navigate("fees-profile")
+                },
+                onPayFees = { student ->
+                    onFeeStudentSelected(student)
+                    onPayDialogChange(true)
+                    navController.navigate("fees-profile")
+                }
+            )
+        }
+        composable("fees-profile") {
+            selectedFeeStudent?.let { student ->
+                val viewModel = remember { FeeProfileViewModel(feeRepository) }
+                FeeProfileScreen(
+                    student = student,
+                    viewModel = viewModel,
+                    initialShowPayDialog = shouldOpenPayDialog,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+        }
+        composable("login") { /* No-op */ }
     }
 }

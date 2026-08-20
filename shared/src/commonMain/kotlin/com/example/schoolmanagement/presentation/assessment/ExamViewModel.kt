@@ -29,33 +29,66 @@ class ExamViewModel(private val repository: AssessmentRepository) : ViewModel() 
     private val _timetableState = MutableStateFlow<ExamTimetableState>(ExamTimetableState.Idle)
     val timetableState: StateFlow<ExamTimetableState> = _timetableState.asStateFlow()
 
+    private val _activeTab = MutableStateFlow("test") // "test" or "exam"
+    val activeTab: StateFlow<String> = _activeTab.asStateFlow()
+
+    private val _selectedExamName = MutableStateFlow<String?>(null)
+    val selectedExamName: StateFlow<String?> = _selectedExamName.asStateFlow()
+
+    private val _selectedGrade = MutableStateFlow<String?>(null)
+    val selectedGrade: StateFlow<String?> = _selectedGrade.asStateFlow()
+
     init {
-        loadExams()
+        loadNames()
     }
 
-    fun loadExams() {
+    fun setActiveTab(tab: String) {
+        _activeTab.value = tab
+        _selectedExamName.value = null
+        _timetableState.value = ExamTimetableState.Idle
+        loadNames()
+    }
+
+    fun setSelectedExam(name: String) {
+        _selectedExamName.value = name
+        loadTimetable(name)
+    }
+
+    fun setSelectedGrade(grade: String?) {
+        _selectedGrade.value = grade
+    }
+
+    fun loadNames() {
         viewModelScope.launch {
             _state.value = ExamState.Loading
-            repository.fetchExamNames()
-                .onSuccess { exams ->
-                    _state.value = ExamState.Success(exams)
-                }
-                .onFailure { error ->
-                    _state.value = ExamState.Error(error.message ?: "Failed to load exams")
-                }
+            val result = if (_activeTab.value == "test") {
+                repository.fetchTestNames()
+            } else {
+                repository.fetchExamNames()
+            }
+            
+            result.onSuccess { exams ->
+                _state.value = ExamState.Success(exams)
+            }.onFailure { error ->
+                _state.value = ExamState.Error(error.message ?: "Failed to load names")
+            }
         }
     }
 
-    fun loadTimetable(examName: String) {
+    fun loadTimetable(name: String) {
         viewModelScope.launch {
             _timetableState.value = ExamTimetableState.Loading
-            repository.fetchExamTimetable(examName)
-                .onSuccess { entries ->
-                    _timetableState.value = ExamTimetableState.Success(entries)
-                }
-                .onFailure { error ->
-                    _timetableState.value = ExamTimetableState.Error(error.message ?: "Failed to load timetable")
-                }
+            val result = if (_activeTab.value == "test") {
+                repository.fetchTestTimetable(name)
+            } else {
+                repository.fetchExamTimetable(name)
+            }
+
+            result.onSuccess { entries ->
+                _timetableState.value = ExamTimetableState.Success(entries)
+            }.onFailure { error ->
+                _timetableState.value = ExamTimetableState.Error(error.message ?: "Failed to load timetable")
+            }
         }
     }
 }
