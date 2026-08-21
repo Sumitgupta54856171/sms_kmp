@@ -81,15 +81,22 @@ class TeacherRepository(private val ktorClient: KtorClient) {
         }
     }
 
-    suspend fun updateTeacher(id: Int, teacher: PartialTeacherData): Result<Unit> {
+    suspend fun updateTeacher(id: Int, teacher: TeacherData): Result<Unit> {
         return try {
-            // The backend update API might expect ID inside the body or as a param
-            // Mirroring React: updateTeacher = async (id: string, data: Partial<TeacherData>) => { ... post("/api/v1/teachers/update", { ...data, id }); }
+            // Backend update expects id inside payload as per React code
             val payload = buildJsonObject {
-                teacher.fullName?.let { put("fullName", it) }
-                teacher.email?.let { put("email", it) }
-                teacher.employee_id?.let { put("employee_id", it) }
                 put("id", id)
+                put("fullName", teacher.fullName)
+                put("email", teacher.email)
+                put("employee_id", teacher.employee_id)
+                teacher.phone?.let { put("phone", it) }
+                teacher.subject_specialization?.let { put("subject_specialization", it) }
+                teacher.gender?.let { put("gender", it) }
+                teacher.aadhaar_id?.let { put("aadhaar_id", it) }
+                teacher.sssmid?.let { put("sssmid", it) }
+                teacher.status?.let { put("status", it) }
+                teacher.education?.let { put("education", it) }
+                teacher.password?.let { if (it.isNotBlank()) put("password", it) }
             }
             val response = ktorClient.client.put("/api/v1/teachers/update") {
                 setBody(payload)
@@ -112,9 +119,3 @@ class TeacherRepository(private val ktorClient: KtorClient) {
         }
     }
 }
-
-data class PartialTeacherData(
-    val fullName: String? = null,
-    val email: String? = null,
-    val employee_id: String? = null
-)

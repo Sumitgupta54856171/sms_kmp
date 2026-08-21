@@ -31,6 +31,7 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
     val state by viewModel.state.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isAddDialogOpen by viewModel.isAddDialogOpen.collectAsState()
+    val editingTeacher by viewModel.editingTeacher.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
@@ -117,6 +118,7 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
                                 items(s.teachers) { teacher ->
                                     TeacherGridCard(
                                         teacher = teacher,
+                                        onEdit = { viewModel.setAddDialogOpen(true, teacher) },
                                         onDelete = { viewModel.deleteTeacher(teacher.id) }
                                     )
                                 }
@@ -129,16 +131,17 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
     }
 
     if (isAddDialogOpen) {
-        AddTeacherDialog(
+        TeacherFormDialog(
             onDismiss = { viewModel.setAddDialogOpen(false) },
-            onConfirm = { viewModel.addTeacher(it) },
-            isSaving = isSaving
+            onConfirm = { viewModel.saveTeacher(it) },
+            isSaving = isSaving,
+            editingTeacher = editingTeacher
         )
     }
 }
 
 @Composable
-fun TeacherGridCard(teacher: TeacherResponse, onDelete: () -> Unit) {
+fun TeacherGridCard(teacher: TeacherResponse, onEdit: () -> Unit, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -211,11 +214,11 @@ fun TeacherGridCard(teacher: TeacherResponse, onDelete: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ActionIconButton(FontAwesomeIcons.Solid.Envelope, Color(0xFF3B82F6))
-                ActionIconButton(FontAwesomeIcons.Solid.Phone, Color(0xFF475569))
-                ActionIconButton(FontAwesomeIcons.Solid.Pen, Color(0xFF475569))
-                ActionIconButton(FontAwesomeIcons.Solid.ShieldAlt, Color(0xFFF59E0B))
-                ActionIconButton(FontAwesomeIcons.Solid.CalendarAlt, Color(0xFF0D9488))
+                ActionIconButton(FontAwesomeIcons.Solid.Envelope, Color(0xFF3B82F6)) { /* Mail */ }
+                ActionIconButton(FontAwesomeIcons.Solid.Phone, Color(0xFF475569)) { /* Call */ }
+                ActionIconButton(FontAwesomeIcons.Solid.Pen, Color(0xFF475569), onEdit)
+                ActionIconButton(FontAwesomeIcons.Solid.ShieldAlt, Color(0xFFF59E0B)) { /* Role */ }
+                ActionIconButton(FontAwesomeIcons.Solid.CalendarAlt, Color(0xFF0D9488)) { /* Schedule */ }
                 IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                     Icon(FontAwesomeIcons.Solid.Trash, null, modifier = Modifier.size(14.dp), tint = Color(0xFFEF4444))
                 }
@@ -225,8 +228,8 @@ fun TeacherGridCard(teacher: TeacherResponse, onDelete: () -> Unit) {
 }
 
 @Composable
-fun ActionIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
-    IconButton(onClick = { /* Action */ }, modifier = Modifier.size(36.dp)) {
+fun ActionIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit = {}) {
+    IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
         Icon(icon, null, modifier = Modifier.size(14.dp), tint = color)
     }
 }
@@ -243,36 +246,90 @@ fun EmptyTeachersView() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTeacherDialog(
+fun TeacherFormDialog(
     onDismiss: () -> Unit,
     onConfirm: (TeacherData) -> Unit,
-    isSaving: Boolean
+    isSaving: Boolean,
+    editingTeacher: TeacherResponse? = null
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var employeeId by remember { mutableStateOf("") }
-    var specialization by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
+    val isEditing = editingTeacher != null
+
+    var fullName by remember { mutableStateOf(editingTeacher?.fullName ?: "") }
+    var email by remember { mutableStateOf(editingTeacher?.email ?: "") }
+    var employeeId by remember { mutableStateOf(editingTeacher?.employee_id ?: "") }
+    var phone by remember { mutableStateOf(editingTeacher?.phone ?: "") }
+    var specialization by remember { mutableStateOf(editingTeacher?.subject_specialization ?: "") }
+    var education by remember { mutableStateOf(editingTeacher?.education ?: "") }
+    
+    var gender by remember { mutableStateOf(editingTeacher?.gender ?: "") }
+    var aadhaarId by remember { mutableStateOf(editingTeacher?.aadhaar_id ?: "") }
+    var sssmid by remember { mutableStateOf(editingTeacher?.sssmid ?: "") }
+    var status by remember { mutableStateOf(editingTeacher?.status ?: "active") }
+    var password by remember { mutableStateOf("") }
+
+    val genders = listOf("male", "female", "other")
+    val statuses = listOf("active", "inactive")
 
     BasicAlertDialog(
         onDismissRequest = onDismiss
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(24.dp),
             color = Color.White,
-            modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight()
+            modifier = Modifier.fillMaxWidth(0.95f).wrapContentHeight()
         ) {
             Column(
-                modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text("Add New Teacher", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                
-                TeacherFormField("Full Name", fullName, { fullName = it }, "Enter full name")
-                TeacherFormField("Email", email, { email = it }, "email@example.com")
-                TeacherFormField("Employee ID", employeeId, { employeeId = it }, "e.g. EMP101")
-                TeacherFormField("Specialization", specialization, { specialization = it }, "e.g. Mathematics")
-                TeacherFormField("Phone", phone, { phone = it }, "10 digit number")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isEditing) "Edit Teacher" else "Add New Teacher",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E293B)
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(FontAwesomeIcons.Solid.Times, null, modifier = Modifier.size(20.dp), tint = Color.Gray)
+                    }
+                }
+
+                HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    TeacherFormField("Full Name *", fullName, { fullName = it }, "Enter full name")
+                    TeacherFormField("Email", email, { email = it }, "email@school.com")
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TeacherFormField("Employee ID *", employeeId, { employeeId = it }, "EMP-2026", Modifier.weight(1f))
+                        TeacherFormField("Phone", phone, { phone = it }, "10 digit number", Modifier.weight(1f))
+                    }
+
+                    TeacherFormField("Subject Specialization", specialization, { specialization = it }, "e.g. Mathematics")
+                    TeacherFormField("Education", education, { education = it }, "e.g. B.Ed, M.A.")
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Gender", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                            TeacherSelectField(gender, genders) { gender = it }
+                        }
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Status", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                            TeacherSelectField(status, statuses) { status = it }
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TeacherFormField("Aadhaar ID", aadhaarId, { aadhaarId = it }, "12 digit ID", Modifier.weight(1f))
+                        TeacherFormField("SSSMID", sssmid, { sssmid = it }, "9 digit ID", Modifier.weight(1f))
+                    }
+
+                    TeacherFormField("Password ${if (isEditing) "(leave blank to keep)" else "*"}", password, { password = it }, "Set login password")
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -282,24 +339,32 @@ fun AddTeacherDialog(
                     TextButton(onClick = onDismiss) {
                         Text("Cancel", color = Color.Gray)
                     }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(12.dp))
                     Button(
                         onClick = {
                             onConfirm(TeacherData(
                                 fullName = fullName,
                                 email = email,
                                 employee_id = employeeId,
+                                phone = phone,
                                 subject_specialization = specialization,
-                                phone = phone
+                                gender = gender,
+                                aadhaar_id = aadhaarId,
+                                sssmid = sssmid,
+                                status = status,
+                                education = education,
+                                password = password.ifBlank { null }
                             ))
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        enabled = !isSaving && fullName.isNotBlank() && email.isNotBlank()
+                        enabled = !isSaving && fullName.isNotBlank() && employeeId.isNotBlank() && (isEditing || password.isNotBlank()),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
                         if (isSaving) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White)
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
                         } else {
-                            Text("Save")
+                            Text(if (isEditing) "Update Teacher" else "Save Teacher", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -309,19 +374,55 @@ fun AddTeacherDialog(
 }
 
 @Composable
-fun TeacherFormField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+fun TeacherSelectField(selected: String, items: List<String>, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Surface(
+            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
+            color = Color.White,
+            shape = RoundedCornerShape(10.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (selected.isBlank()) "Select..." else selected.replaceFirstChar { it.uppercase() },
+                    fontSize = 14.sp,
+                    color = if (selected.isBlank()) Color.LightGray else Color(0xFF1E293B)
+                )
+                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item.replaceFirstChar { it.uppercase() }) },
+                    onClick = { onSelect(item); expanded = false }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TeacherFormField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, fontSize = 14.sp) },
-            shape = RoundedCornerShape(8.dp),
+            placeholder = { Text(placeholder, fontSize = 14.sp, color = Color.LightGray) },
+            shape = RoundedCornerShape(10.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Color(0xFF0D9488),
+                unfocusedBorderColor = Color(0xFFE2E8F0)
             )
         )
     }

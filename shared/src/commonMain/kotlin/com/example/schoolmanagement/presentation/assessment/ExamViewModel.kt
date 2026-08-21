@@ -38,6 +38,9 @@ class ExamViewModel(private val repository: AssessmentRepository) : ViewModel() 
     private val _selectedGrade = MutableStateFlow<String?>(null)
     val selectedGrade: StateFlow<String?> = _selectedGrade.asStateFlow()
 
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
     init {
         loadNames()
     }
@@ -50,6 +53,11 @@ class ExamViewModel(private val repository: AssessmentRepository) : ViewModel() 
     }
 
     fun setSelectedExam(name: String) {
+        if (name.isBlank()) {
+            _selectedExamName.value = null
+            _timetableState.value = ExamTimetableState.Idle
+            return
+        }
         _selectedExamName.value = name
         loadTimetable(name)
     }
@@ -88,6 +96,26 @@ class ExamViewModel(private val repository: AssessmentRepository) : ViewModel() 
                 _timetableState.value = ExamTimetableState.Success(entries)
             }.onFailure { error ->
                 _timetableState.value = ExamTimetableState.Error(error.message ?: "Failed to load timetable")
+            }
+        }
+    }
+
+    fun createTimetableEntries(entries: List<ExamTimetableEntry>, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            _isSaving.value = true
+            val type = if (_activeTab.value == "test") "test" else "exam"
+            val result = if (type == "test") {
+                repository.saveTestTimetable(entries)
+            } else {
+                repository.saveExamTimetable(entries)
+            }
+
+            result.onSuccess {
+                _isSaving.value = false
+                loadNames()
+                onComplete()
+            }.onFailure {
+                _isSaving.value = false
             }
         }
     }

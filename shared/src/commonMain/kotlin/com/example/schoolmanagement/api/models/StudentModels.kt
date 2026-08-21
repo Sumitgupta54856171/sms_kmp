@@ -17,6 +17,7 @@ data class StudentListItem(
     val class_no: String? = null,
     val rollNo: String? = null,
     val roll_no: String? = null,
+    val rolleNo: String? = null, // Backend inconsistency alias
     val id: Int? = null,
     val enrollmentId: Int? = null,
     val email: String? = null,
@@ -64,4 +65,10 @@ data class StudentEnrollment(
     val enrollmentId: Int? = null,
     val class_no: String? = null,
     val roll_no: String? = null
+)
+
+@Serializable
+data class BulkRollNoPayload(
+    val studentId: Int,
+    val rollno: String
 )

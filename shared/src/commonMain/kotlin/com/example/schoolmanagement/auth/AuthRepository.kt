@@ -11,6 +11,7 @@ data class LoginResponse(
     val token: String? = null,
     val name: String? = null,
     val role: String? = null,
+    val id: Int? = null,
     val sessionId: Int? = null,
     val message: String? = null
 )
@@ -33,7 +34,7 @@ class AuthRepository(
 
             if (response.token != null) {
                 tokenManager.saveToken(response.token)
-                tokenManager.saveUserInfo(response.name ?: "", response.role ?: "")
+                tokenManager.saveUserInfo(response.name ?: "", response.role ?: "", response.id)
                 response.sessionId?.let { tokenManager.saveSessionId(it) }
                 Result.success(response)
             } else {

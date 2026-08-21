@@ -122,6 +122,19 @@ class StudentRepository(private val ktorClient: KtorClient) {
         }
     }
 
+    suspend fun updateBulkRollNo(payload: List<BulkRollNoPayload>): Result<Unit> {
+        return try {
+            val response = ktorClient.client.put("/api/v1/students/update/roll/no") {
+                setBody(payload)
+                contentType(ContentType.Application.Json)
+            }
+            if (response.status.isSuccess()) Result.success(Unit)
+            else Result.failure(Exception("Failed to update roll numbers"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteStudentPhoto(studentId: Int): Result<Unit> {
         return try {
             val response = ktorClient.client.delete("/api/v1/students/photo/delete/$studentId")

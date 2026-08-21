@@ -79,11 +79,34 @@ class AcademicRepository(private val ktorClient: KtorClient) {
         }
     }
 
+    suspend fun fetchTimetableByTeacher(teacherId: Int): Result<List<PeriodEntry>> {
+        return try {
+            val response = ktorClient.client.get("/api/v1/academic-options/time-table/teacher/$teacherId")
+            val periods = response.parseList<PeriodEntry>()
+            Result.success(periods)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun fetchAllClassTeachers(): Result<List<ClassTeacherAssignment>> {
         return try {
             val response = ktorClient.client.get("/api/v1/academic-options/timetable/class-teachers/all")
             val assignments = response.parseList<ClassTeacherAssignment>()
             Result.success(assignments)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun assignClassTeacher(assignment: ClassTeacherAssignment): Result<Unit> {
+        return try {
+            val response = ktorClient.client.post("/api/v1/academic-options/timetable/class-teacher") {
+                setBody(assignment)
+                contentType(ContentType.Application.Json)
+            }
+            if (response.status.isSuccess()) Result.success(Unit)
+            else Result.failure(Exception("Failed to assign class teacher"))
         } catch (e: Exception) {
             Result.failure(e)
         }

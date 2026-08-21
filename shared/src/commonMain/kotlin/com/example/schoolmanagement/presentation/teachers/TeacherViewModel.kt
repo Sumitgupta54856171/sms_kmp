@@ -26,6 +26,9 @@ class TeacherViewModel(private val repository: TeacherRepository) : ViewModel() 
     private val _isAddDialogOpen = MutableStateFlow(false)
     val isAddDialogOpen: StateFlow<Boolean> = _isAddDialogOpen.asStateFlow()
 
+    private val _editingTeacher = MutableStateFlow<TeacherResponse?>(null)
+    val editingTeacher: StateFlow<TeacherResponse?> = _editingTeacher.asStateFlow()
+
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
@@ -68,21 +71,27 @@ class TeacherViewModel(private val repository: TeacherRepository) : ViewModel() 
         _state.value = TeacherListState.Success(filtered)
     }
 
-    fun setAddDialogOpen(open: Boolean) {
+    fun setAddDialogOpen(open: Boolean, teacher: TeacherResponse? = null) {
+        _editingTeacher.value = teacher
         _isAddDialogOpen.value = open
     }
 
-    fun addTeacher(teacher: TeacherData) {
+    fun saveTeacher(teacher: TeacherData) {
         viewModelScope.launch {
             _isSaving.value = true
-            repository.saveTeacher(teacher)
-                .onSuccess {
-                    _isAddDialogOpen.value = false
-                    loadTeachers()
-                }
-                .onFailure {
-                    // Handle error
-                }
+            val result = if (_editingTeacher.value != null) {
+                repository.updateTeacher(_editingTeacher.value!!.id, teacher)
+            } else {
+                repository.saveTeacher(teacher)
+            }
+            
+            result.onSuccess {
+                _isAddDialogOpen.value = false
+                _editingTeacher.value = null
+                loadTeachers()
+            }.onFailure {
+                // Handle error
+            }
             _isSaving.value = false
         }
     }

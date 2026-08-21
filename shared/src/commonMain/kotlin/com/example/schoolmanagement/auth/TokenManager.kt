@@ -7,6 +7,7 @@ class TokenManager(private val settings: Settings = Settings()) {
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_USER_ROLE = "user_role"
+        private const val KEY_USER_ID = "user_id"
         private const val KEY_SESSION_ID = "current_session_id"
     }
 
@@ -27,9 +28,15 @@ class TokenManager(private val settings: Settings = Settings()) {
         return settings.getStringOrNull(KEY_TOKEN)
     }
 
-    fun saveUserInfo(name: String, role: String) {
+    fun saveUserInfo(name: String, role: String, id: Int? = null) {
         settings.putString(KEY_USER_NAME, name)
         settings.putString(KEY_USER_ROLE, role)
+        id?.let { settings.putInt(KEY_USER_ID, it) }
+    }
+
+    fun getUserId(): Int? {
+        val id = settings.getInt(KEY_USER_ID, -1)
+        return if (id == -1) null else id
     }
 
     fun getUserName(): String? = settings.getStringOrNull(KEY_USER_NAME)

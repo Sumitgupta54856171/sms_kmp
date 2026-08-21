@@ -13,7 +13,8 @@ data class TeacherData(
     val aadhaar_id: String? = null,
     val sssmid: String? = null,
     val status: String? = "active",
-    val education: String? = null
+    val education: String? = null,
+    val password: String? = null
 )
 
 @Serializable
@@ -28,6 +29,7 @@ data class TeacherResponse(
     val aadhaar_id: String? = null,
     val sssmid: String? = null,
     val status: String,
+    val education: String? = null,
     val created_at: String? = null
 )
 
