@@ -49,7 +49,7 @@ fun StudentScreen(
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Search students...") },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
@@ -61,7 +61,7 @@ fun StudentScreen(
                         onClick = { viewModel.setAddStudentDialogOpen(true) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Text("+ Add Student", fontWeight = FontWeight.Bold)
@@ -78,7 +78,7 @@ fun StudentScreen(
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier.weight(1f),
                         placeholder = { Text("Search by name or scholar no...") },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
@@ -89,7 +89,7 @@ fun StudentScreen(
                     Button(
                         onClick = { viewModel.setAddStudentDialogOpen(true) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
                         Text("+ Add Student", fontWeight = FontWeight.Bold)
@@ -154,7 +154,7 @@ fun StudentFormDialog(
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.medium,
             color = Color.White
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -284,7 +284,7 @@ fun FormField(label: String, value: String, onValueChange: (String) -> Unit, pla
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, fontSize = 14.sp) },
-            shape = RoundedCornerShape(8.dp),
+            shape = MaterialTheme.shapes.extraSmall,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
@@ -365,7 +365,7 @@ fun StudentCard(student: StudentListItem, onClick: () -> Unit) {
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
@@ -386,7 +386,7 @@ fun StudentCard(student: StudentListItem, onClick: () -> Unit) {
 fun StatusBadge(status: String, modifier: Modifier = Modifier) {
     val isActive = status.lowercase() == "active"
     Surface(
-        modifier = modifier.clip(RoundedCornerShape(4.dp)),
+        modifier = modifier.clip(MaterialTheme.shapes.extraSmall),
         color = if (isActive) Color(0xFFF0FDFA) else Color(0xFFF1F5F9),
         contentColor = if (isActive) Color(0xFF0D9488) else Color(0xFF64748B)
     ) {

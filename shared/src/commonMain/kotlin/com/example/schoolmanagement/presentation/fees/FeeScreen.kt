@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.schoolmanagement.api.models.StudentListItem
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -74,7 +75,7 @@ fun FeeScreen(
                 onValueChange = { viewModel.setSearchQuery(it) },
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Search by name, scholar no...") },
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.extraSmall,
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
@@ -127,54 +128,18 @@ fun FeeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClassDropdown(
     selectedClass: String,
     classes: List<String>,
     onClassSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        Surface(
-            modifier = Modifier
-                .width(160.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .clickable { expanded = true },
-            color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = if (selectedClass == "All Classes") selectedClass else "Grade $selectedClass",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(12.dp), tint = Color.Gray)
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color.White)
-        ) {
-            classes.forEach { className ->
-                DropdownMenuItem(
-                    text = { Text(if (className == "All Classes") className else "Grade $className") },
-                    onClick = {
-                        onClassSelected(className)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = if (selectedClass == "All Classes") selectedClass else "Grade $selectedClass",
+        items = classes.map { if (it == "All Classes") it else "Grade $it" },
+        onSelect = { onClassSelected(it.replace("Grade ", "")) },
+        modifier = Modifier.width(200.dp)
+    )
 }
 
 @Composable
@@ -187,7 +152,7 @@ fun FeeStudentCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -246,7 +211,7 @@ fun FeeStudentCard(
                 Button(
                     onClick = onPayFees,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     Icon(FontAwesomeIcons.Solid.Wallet, null, modifier = Modifier.size(14.dp))

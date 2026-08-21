@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.schoolmanagement.api.models.ExamTimetableEntry
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -65,7 +66,7 @@ fun ExamScreen(viewModel: ExamViewModel) {
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF475569)),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(14.dp))
@@ -81,7 +82,7 @@ fun ExamScreen(viewModel: ExamViewModel) {
                             showAddDialog = true 
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(14.dp))
@@ -253,7 +254,7 @@ private fun FilterSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
     ) {
@@ -283,7 +284,7 @@ private fun FilterSection(
                 onClick = onClear,
                 modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier.width(100.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F5F9), contentColor = Color(0xFF475569)),
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
                 Text("Clear", fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -304,28 +305,12 @@ private fun FilterSection(
 
 @Composable
 private fun DropdownFilter(label: String, items: List<String>, onSelect: (String) -> Unit, icon: ImageVector) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Surface(
-            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
-            color = Color(0xFFF8FAFC),
-            shape = RoundedCornerShape(10.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(icon, null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                    Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
-                }
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.White)) {
-            items.forEach { item ->
-                DropdownMenuItem(text = { Text(item) }, onClick = { onSelect(item); expanded = false })
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = label,
+        items = items,
+        onSelect = onSelect,
+        icon = icon
+    )
 }
 
 @Composable
@@ -483,7 +468,7 @@ fun TimetableFormDialog(
         onDismissRequest = onDismiss
     ) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.large,
             color = Color.White,
             modifier = Modifier.fillMaxWidth(0.95f).wrapContentHeight()
         ) {
@@ -617,7 +602,7 @@ private fun FormInput(label: String, value: String, onValueChange: (String) -> U
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, fontSize = 13.sp, color = Color.LightGray) },
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.small,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF0D9488),
@@ -629,33 +614,11 @@ private fun FormInput(label: String, value: String, onValueChange: (String) -> U
 
 @Composable
 private fun SimpleDropdown(selected: String, items: List<String>, onSelect: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        OutlinedCard(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = if (selected.isBlank()) "Select..." else selected,
-                    fontSize = 13.sp,
-                    color = if (selected.isBlank()) Color.Gray else Color(0xFF1E293B)
-                )
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.White)) {
-            items.forEach { item ->
-                DropdownMenuItem(text = { Text(item, fontSize = 13.sp) }, onClick = { onSelect(item); expanded = false })
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = selected.ifBlank { "Select..." },
+        items = items,
+        onSelect = onSelect
+    )
 }
 
 @Composable
@@ -685,7 +648,7 @@ fun ReadOnlyInput(
         Surface(
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.small,
             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
             color = Color.White
         ) {
@@ -735,7 +698,7 @@ fun ExamItem(name: String, isSelected: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable { onClick() },
         color = if (isSelected) Color(0xFFF0FDFA) else Color.Transparent,
-        shape = RoundedCornerShape(8.dp)
+        shape = MaterialTheme.shapes.extraSmall
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(

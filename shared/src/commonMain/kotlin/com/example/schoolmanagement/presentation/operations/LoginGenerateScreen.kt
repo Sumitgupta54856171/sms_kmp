@@ -40,7 +40,7 @@ fun LoginGenerateScreen(viewModel: LoginGenerateViewModel) {
             Card(
                 modifier = Modifier.weight(1.5f).fillMaxHeight(),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp)
+                shape = MaterialTheme.shapes.medium
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -77,7 +77,7 @@ fun LoginGenerateScreen(viewModel: LoginGenerateViewModel) {
             Card(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp)
+                shape = MaterialTheme.shapes.medium
             ) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Settings", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -87,7 +87,7 @@ fun LoginGenerateScreen(viewModel: LoginGenerateViewModel) {
                         onValueChange = { password = it },
                         label = { Text("Common Password") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = MaterialTheme.shapes.extraSmall
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -97,7 +97,7 @@ fun LoginGenerateScreen(viewModel: LoginGenerateViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
                         enabled = !isGenerating && selectedIds.isNotEmpty() && password.isNotBlank(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text("Generate Student Logins")
                     }
@@ -107,7 +107,7 @@ fun LoginGenerateScreen(viewModel: LoginGenerateViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
                         enabled = !isGenerating && selectedIds.isNotEmpty() && password.isNotBlank(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = MaterialTheme.shapes.extraSmall
                     ) {
                         Text("Generate Parent Logins")
                     }
@@ -124,7 +124,7 @@ fun StudentSelectRow(name: String, scholarNo: String, isSelected: Boolean, onCli
             .fillMaxWidth()
             .clickable { onClick() },
         color = if (isSelected) Color(0xFFF0FDFA) else Color.Transparent,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0D9488).copy(0.3f)) else null
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {

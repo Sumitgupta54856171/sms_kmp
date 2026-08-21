@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.schoolmanagement.api.models.TeacherData
 import com.example.schoolmanagement.api.models.TeacherResponse
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -52,7 +53,7 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
                         onClick = { viewModel.setAddDialogOpen(true) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
@@ -73,7 +74,7 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
                     Button(
                         onClick = { viewModel.setAddDialogOpen(true) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
@@ -90,7 +91,7 @@ fun TeacherScreen(viewModel: TeacherViewModel) {
                 onValueChange = { viewModel.onSearchQueryChange(it) },
                 modifier = Modifier.fillMaxWidth().padding(bottom = if (isCompact) 16.dp else 24.dp).shadow(2.dp, RoundedCornerShape(12.dp)),
                 placeholder = { Text("Search by name, ID, or email...", color = Color.Gray, fontSize = 14.sp) },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.small,
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
@@ -146,7 +147,7 @@ fun TeacherGridCard(teacher: TeacherResponse, onEdit: () -> Unit, onDelete: () -
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(20.dp)
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier.padding(top = 24.dp),
@@ -194,12 +195,12 @@ fun TeacherGridCard(teacher: TeacherResponse, onEdit: () -> Unit, onDelete: () -
             // Tags Row
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 teacher.gender?.let {
-                    Surface(color = Color(0xFFEFF6FF), shape = RoundedCornerShape(6.dp)) {
+                    Surface(color = Color(0xFFEFF6FF), shape = MaterialTheme.shapes.extraSmall) {
                         Text(it, fontSize = 10.sp, color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                     }
                 }
                 teacher.sssmid?.let {
-                    Surface(color = Color(0xFFFAF5FF), shape = RoundedCornerShape(6.dp)) {
+                    Surface(color = Color(0xFFFAF5FF), shape = MaterialTheme.shapes.extraSmall) {
                         Text("SSSMID: $it", fontSize = 10.sp, color = Color(0xFF8B5CF6), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                     }
                 }
@@ -274,7 +275,7 @@ fun TeacherFormDialog(
         onDismissRequest = onDismiss
     ) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.large,
             color = Color.White,
             modifier = Modifier.fillMaxWidth(0.95f).wrapContentHeight()
         ) {
@@ -358,7 +359,7 @@ fun TeacherFormDialog(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
                         enabled = !isSaving && fullName.isNotBlank() && employeeId.isNotBlank() && (isEditing || password.isNotBlank()),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
                         if (isSaving) {
@@ -375,36 +376,11 @@ fun TeacherFormDialog(
 
 @Composable
 fun TeacherSelectField(selected: String, items: List<String>, onSelect: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Surface(
-            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
-            color = Color.White,
-            shape = RoundedCornerShape(10.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = if (selected.isBlank()) "Select..." else selected.replaceFirstChar { it.uppercase() },
-                    fontSize = 14.sp,
-                    color = if (selected.isBlank()) Color.LightGray else Color(0xFF1E293B)
-                )
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(item.replaceFirstChar { it.uppercase() }) },
-                    onClick = { onSelect(item); expanded = false }
-                )
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = if (selected.isBlank()) "Select..." else selected.replaceFirstChar { it.uppercase() },
+        items = items.map { it.replaceFirstChar { char -> char.uppercase() } },
+        onSelect = { onSelect(it.lowercase()) }
+    )
 }
 
 @Composable
@@ -416,7 +392,7 @@ fun TeacherFormField(label: String, value: String, onValueChange: (String) -> Un
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, fontSize = 14.sp, color = Color.LightGray) },
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.small,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White,

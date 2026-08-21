@@ -240,7 +240,7 @@ fun DashboardContent(
 fun ChartCard(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
     ) {
@@ -261,7 +261,7 @@ fun ChartCard(title: String, modifier: Modifier = Modifier, content: @Composable
 @Composable
 fun LegendItem(label: String, color: Color, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(modifier = Modifier.size(12.dp).background(color, RoundedCornerShape(4.dp)))
+        Box(modifier = Modifier.size(12.dp).background(color, MaterialTheme.shapes.extraSmall))
         Column {
             Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
             Text(value, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF1E293B), fontWeight = FontWeight.Black)
@@ -321,7 +321,7 @@ fun QuickOverviewGrid(stats: com.example.schoolmanagement.api.models.DashboardSt
                     Surface(
                         modifier = Modifier.weight(1f),
                         color = Color.White,
-                        shape = RoundedCornerShape(20.dp),
+                        shape = MaterialTheme.shapes.large,
                         shadowElevation = 0.5.dp,
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
                     ) {
@@ -341,7 +341,7 @@ fun QuickOverviewGrid(stats: com.example.schoolmanagement.api.models.DashboardSt
 fun RecentNotices(notices: List<com.example.schoolmanagement.api.models.Notice>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -352,7 +352,7 @@ fun RecentNotices(notices: List<com.example.schoolmanagement.api.models.Notice>,
             }
             notices.forEach { notice ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Box(modifier = Modifier.size(4.dp, 32.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFFF59E0B)))
+                    Box(modifier = Modifier.size(4.dp, 32.dp).clip(MaterialTheme.shapes.extraSmall).background(Color(0xFFF59E0B)))
                     Column {
                         Text(notice.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                         Text(notice.data, style = MaterialTheme.typography.labelSmall, color = Color(0xFF94A3B8))
@@ -368,7 +368,7 @@ fun RecentNotices(notices: List<com.example.schoolmanagement.api.models.Notice>,
 fun UpcomingEvents(events: List<com.example.schoolmanagement.api.models.SchoolEvent>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -381,7 +381,7 @@ fun UpcomingEvents(events: List<com.example.schoolmanagement.api.models.SchoolEv
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Surface(
                         modifier = Modifier.size(44.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.small,
                         color = parseColor(event.color ?: "#0D9488").copy(alpha = 0.1f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -456,7 +456,7 @@ fun OptionCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVec
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
         shadowElevation = 0.5.dp

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -49,7 +50,7 @@ fun GradeScreen(viewModel: GradeViewModel) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(
-                    modifier = Modifier.size(if (isCompact) 40.dp else 56.dp).clip(RoundedCornerShape(if (isCompact) 10.dp else 14.dp)).background(Color(0xFFF0FDFA)),
+                    modifier = Modifier.size(if (isCompact) 40.dp else 56.dp).clip(MaterialTheme.shapes.medium).background(Color(0xFFF0FDFA)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(FontAwesomeIcons.Solid.ClipboardCheck, null, modifier = Modifier.size(if (isCompact) 20.dp else 28.dp), tint = Color(0xFF0D9488))
@@ -66,7 +67,7 @@ fun GradeScreen(viewModel: GradeViewModel) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(if (isCompact) 16.dp else 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -163,7 +164,7 @@ fun GradeScreen(viewModel: GradeViewModel) {
                                         onClick = { viewModel.saveGrades() },
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
                                         enabled = !isSaving,
-                                        shape = RoundedCornerShape(10.dp),
+                                        shape = MaterialTheme.shapes.small,
                                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                                     ) {
                                         if (isSaving) CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
@@ -194,25 +195,11 @@ fun GradeFilterRow(label: String, content: @Composable () -> Unit) {
 
 @Composable
 fun GradeDropdown(label: String, items: List<String>, onSelect: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Surface(
-            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
-            color = Color(0xFFF8FAFC),
-            shape = RoundedCornerShape(8.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (label.startsWith("Select")) Color.Gray else Color(0xFF1E293B))
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                DropdownMenuItem(text = { Text(item) }, onClick = { onSelect(item); expanded = false })
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = label,
+        items = items,
+        onSelect = onSelect
+    )
 }
 
 @Composable
@@ -220,7 +207,7 @@ fun GradeRow(row: StudentGradeRow, onMarksChange: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
@@ -235,7 +222,7 @@ fun GradeRow(row: StudentGradeRow, onMarksChange: (String) -> Unit) {
                 onValueChange = onMarksChange,
                 modifier = Modifier.width(80.dp),
                 placeholder = { Text("0.0") },
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.extraSmall,
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFF8FAFC),

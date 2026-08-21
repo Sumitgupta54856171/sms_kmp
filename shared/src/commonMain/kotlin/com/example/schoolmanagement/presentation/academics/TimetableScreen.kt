@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.example.schoolmanagement.api.models.ClassTeacherAssignment
 import com.example.schoolmanagement.api.models.PeriodEntry
 import com.example.schoolmanagement.api.models.TeacherResponse
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -70,7 +71,7 @@ fun TimetableScreen(viewModel: TimetableViewModel) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Box(
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF0FDFA)),
+                        modifier = Modifier.size(48.dp).clip(MaterialTheme.shapes.small).background(Color(0xFFF0FDFA)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(FontAwesomeIcons.Solid.CalendarAlt, null, modifier = Modifier.size(24.dp), tint = Color(0xFF0D9488))
@@ -89,7 +90,7 @@ fun TimetableScreen(viewModel: TimetableViewModel) {
                     Button(
                         onClick = { showAssignModal = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         enabled = selectedTeacherId != null
                     ) {
                         Icon(FontAwesomeIcons.Solid.Plus, null, modifier = Modifier.size(16.dp))
@@ -297,7 +298,7 @@ fun PeriodRow(period: PeriodEntry, showGrade: Boolean, showTeacher: Boolean, onD
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
@@ -308,7 +309,7 @@ fun PeriodRow(period: PeriodEntry, showGrade: Boolean, showTeacher: Boolean, onD
         ) {
             Surface(
                 color = Color(0xFFF0FDFA),
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.extraSmall,
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -346,7 +347,7 @@ fun ClassTeacherCard(assignment: ClassTeacherAssignment) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
         Row(
@@ -375,7 +376,7 @@ fun InfoBanner(icon: ImageVector, text: String, color: Color) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = color.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -387,25 +388,13 @@ fun InfoBanner(icon: ImageVector, text: String, color: Color) {
 
 @Composable
 fun DropdownSelector(label: String, items: List<String>, onSelect: (String) -> Unit, enabled: Boolean = true, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        Surface(
-            modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { expanded = true },
-            color = Color.White,
-            shape = RoundedCornerShape(8.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(label, fontSize = 14.sp, color = if (label.contains("Select")) Color.Gray else Color(0xFF1E293B))
-                Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                DropdownMenuItem(text = { Text(item) }, onClick = { onSelect(item); expanded = false })
-            }
-        }
-    }
+    ExpressiveDropdown(
+        label = label,
+        items = items,
+        onSelect = onSelect,
+        enabled = enabled,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -435,7 +424,7 @@ fun AssignPeriodDialog(
     val subjects = listOf("Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physics", "Chemistry", "Biology")
 
     BasicAlertDialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(16.dp), color = Color.White, modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight()) {
+        Surface(shape = MaterialTheme.shapes.medium, color = Color.White, modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight()) {
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Assign Period", fontSize = 18.sp, fontWeight = FontWeight.Bold)
 

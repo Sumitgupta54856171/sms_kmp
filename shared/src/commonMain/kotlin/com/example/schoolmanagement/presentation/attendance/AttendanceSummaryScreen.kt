@@ -52,7 +52,7 @@ fun AttendanceSummaryScreen(viewModel: AttendanceSummaryViewModel) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(Brush.horizontalGradient(listOf(Color(0xFF1E293B), Color(0xFF334155))))
                 .padding(24.dp)
         ) {
@@ -76,7 +76,7 @@ fun AttendanceSummaryScreen(viewModel: AttendanceSummaryViewModel) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.medium,
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -143,7 +143,7 @@ fun SummaryStatCard(label: String, value: String, color: Color, modifier: Modifi
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -164,7 +164,7 @@ fun ExpandableClassCard(className: String, records: List<AttendanceRecord>, work
     Card(
         modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

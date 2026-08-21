@@ -68,7 +68,7 @@ fun LoginScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Surface(
                                 modifier = Modifier.size(64.dp),
-                                shape = RoundedCornerShape(16.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 color = Color(0xFF6366F1)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -149,7 +149,7 @@ fun LoginScreen(
                                 onValueChange = { viewModel.onEmailChange(it) },
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text("email@example.com", color = Color.LightGray) },
-                                shape = RoundedCornerShape(12.dp),
+                                shape = MaterialTheme.shapes.small,
                                 singleLine = true,
                                 enabled = state !is LoginState.Loading,
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -167,7 +167,7 @@ fun LoginScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text("Enter your password", color = Color.LightGray) },
                                 visualTransformation = PasswordVisualTransformation(),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = MaterialTheme.shapes.small,
                                 singleLine = true,
                                 enabled = state !is LoginState.Loading,
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -190,7 +190,7 @@ fun LoginScreen(
                             onClick = { viewModel.login() },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.small,
                             enabled = state !is LoginState.Loading,
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                         ) {

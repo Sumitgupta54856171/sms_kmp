@@ -39,7 +39,7 @@ fun MainScaffold(
                 drawerContent = {
                     ModalDrawerSheet(
                         drawerContainerColor = Color(0xFFFAFBFC),
-                        drawerShape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp),
+                        drawerShape = MaterialTheme.shapes.large,
                         modifier = Modifier.width(280.dp)
                     ) {
                         Sidebar(

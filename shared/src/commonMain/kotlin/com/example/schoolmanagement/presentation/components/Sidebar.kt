@@ -172,7 +172,7 @@ private fun BrandHeader() {
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.small)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(SidebarColors.Accent, SidebarColors.AccentDark)
@@ -218,7 +218,7 @@ private fun DashboardNavItem(isActive: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .padding(horizontal = SidebarSpacing.md)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             .clickable { onClick() },
         color = containerColor,
         shadowElevation = if (isActive) 4.dp else 0.dp
@@ -269,7 +269,7 @@ private fun NavMenuItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             .clickable { onClick() },
         color = containerColor
     ) {
@@ -312,7 +312,7 @@ private fun UserProfileFooter(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = SidebarSpacing.md, vertical = SidebarSpacing.md)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .clickable { onLogout() }
                 .padding(horizontal = SidebarSpacing.sm, vertical = SidebarSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
@@ -355,7 +355,7 @@ private fun UserProfileFooter(
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(SidebarColors.DangerLight),
                 contentAlignment = Alignment.Center
             ) {

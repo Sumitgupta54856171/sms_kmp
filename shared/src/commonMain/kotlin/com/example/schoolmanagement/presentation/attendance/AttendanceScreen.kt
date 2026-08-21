@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -238,7 +239,7 @@ private fun AttendanceHeader(
                         containerColor = if (isEditing) AppColors.PrimaryText else AppColors.Surface,
                         contentColor = if (isEditing) AppColors.Surface else AppColors.SecondaryText
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.small,
                     contentPadding = PaddingValues(vertical = Spacing.sm),
                 ) {
                     Icon(
@@ -259,7 +260,7 @@ private fun AttendanceHeader(
                         disabledContainerColor = AppColors.AccentLight,
                     ),
                     enabled = !isSaving && canSave,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.small,
                     contentPadding = PaddingValues(vertical = Spacing.sm)
                 ) {
                     if (isSaving) {
@@ -305,7 +306,7 @@ private fun AttendanceHeader(
                         containerColor = if (isEditing) AppColors.PrimaryText else AppColors.Surface,
                         contentColor = if (isEditing) AppColors.Surface else AppColors.SecondaryText
                     ),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.small,
                     contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.md),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 2.dp)
                 ) {
@@ -333,7 +334,7 @@ private fun AttendanceHeader(
                     ),
                     enabled = !isSaving && canSave,
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 6.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.small,
                     contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.md)
                 ) {
                     if (isSaving) {
@@ -361,77 +362,12 @@ private fun ClassSelector(
     onSelect: (String) -> Unit,
     allClasses: List<String>
 ) {
-    Surface(
-        onClick = { onExpandChange(true) },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = AppColors.Surface,
-        shadowElevation = 1.dp,
-        border = BorderStroke(1.dp, AppColors.Border)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md + 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(AppColors.Indigo.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        FontAwesomeIcons.Solid.GraduationCap,
-                        null,
-                        modifier = Modifier.size(16.dp),
-                        tint = AppColors.Indigo
-                    )
-                }
-                Spacer(Modifier.width(Spacing.md))
-                Text(
-                    "Grade $selectedClass",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.PrimaryText
-                )
-            }
-            Icon(
-                FontAwesomeIcons.Solid.ChevronDown,
-                null,
-                modifier = Modifier.size(12.dp),
-                tint = AppColors.TertiaryText
-            )
-        }
-    }
-
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { onExpandChange(false) },
-        modifier = Modifier
-            .background(AppColors.Surface, RoundedCornerShape(12.dp))
-            .width(220.dp),
-        shape = RoundedCornerShape(12.dp),
-        tonalElevation = 4.dp,
-        shadowElevation = 8.dp
-    ) {
-        allClasses.forEach { cls ->
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        "Grade $cls",
-                        fontWeight = if (cls == selectedClass) FontWeight.Bold else FontWeight.Medium,
-                        color = if (cls == selectedClass) AppColors.Accent else AppColors.PrimaryText
-                    )
-                },
-                onClick = { onSelect(cls) },
-                modifier = Modifier.background(
-                    if (cls == selectedClass) AppColors.Accent.copy(alpha = 0.08f) else Color.Transparent
-                )
-            )
-        }
-    }
+    ExpressiveDropdown(
+        label = "Grade $selectedClass",
+        items = allClasses.map { "Grade $it" },
+        onSelect = { onSelect(it.replace("Grade ", "")) },
+        icon = FontAwesomeIcons.Solid.GraduationCap
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -473,7 +409,7 @@ private fun DateSelector(
     Surface(
         onClick = { showDatePicker = true },
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.small,
         color = AppColors.Surface,
         shadowElevation = 1.dp,
         border = BorderStroke(1.dp, AppColors.Border)
@@ -653,7 +589,7 @@ fun StatMiniCard(label: String, value: String, color: Color, icon: ImageVector, 
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(if (isCompact) 14.dp else 18.dp),
+        shape = if (isCompact) MaterialTheme.shapes.small else MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, AppColors.Border)
     ) {
         Column(modifier = Modifier.padding(if (isCompact) Spacing.md else Spacing.lg)) {
@@ -695,7 +631,7 @@ fun StatMiniCard(label: String, value: String, color: Color, icon: ImageVector, 
 fun AttendanceRow(row: AttendanceStudentRow, isEditing: Boolean, isCompact: Boolean, onStatusChange: (String) -> Unit, onSync: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(if (isCompact) 14.dp else 18.dp),
+        shape = if (isCompact) MaterialTheme.shapes.small else MaterialTheme.shapes.medium,
         color = AppColors.Surface,
         shadowElevation = 0.5.dp,
         border = BorderStroke(1.dp, AppColors.Border)
@@ -804,7 +740,7 @@ fun StatusButton(label: String, status: String, isSelected: Boolean, color: Colo
     Surface(
         modifier = Modifier
             .size(if (isCompact) 34.dp else 40.dp)
-            .clip(RoundedCornerShape(if (isCompact) 10.dp else 12.dp))
+            .clip(MaterialTheme.shapes.small)
             .clickable { onClick(status) },
         color = backgroundColor,
         contentColor = contentColor,

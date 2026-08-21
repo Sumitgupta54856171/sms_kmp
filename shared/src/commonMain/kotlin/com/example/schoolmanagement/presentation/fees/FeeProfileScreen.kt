@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.schoolmanagement.api.models.*
+import com.example.schoolmanagement.presentation.components.ExpressiveDropdown
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.*
@@ -62,7 +63,7 @@ fun FeeProfileScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Row(
                 modifier = Modifier.padding(20.dp),
@@ -120,7 +121,7 @@ fun FeeProfileScreen(
                 onClick = { showPayDialog = true },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Icon(FontAwesomeIcons.Solid.Wallet, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
@@ -130,7 +131,7 @@ fun FeeProfileScreen(
             OutlinedButton(
                 onClick = { /* Print logic */ },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Icon(FontAwesomeIcons.Solid.Print, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
@@ -190,7 +191,7 @@ fun FeeSummaryGrid(details: FeeDetailState.Success) {
                         modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(label, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray, maxLines = 1)
@@ -228,12 +229,10 @@ fun PaymentHistorySection(
     onSessionSelected: (Int) -> Unit,
     payments: List<InvoiceData>
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -243,44 +242,15 @@ fun PaymentHistorySection(
             ) {
                 Text("Payment History", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 
-                Box {
-                    Surface(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { expanded = true },
-                        color = Color(0xFFF1F5F9)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = sessions.find { it.enrollementNo == selectedEnrollmentId }?.sessionName ?: "Select Session",
-                                fontSize = 12.sp,
-                                color = Color(0xFF0D9488),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Icon(FontAwesomeIcons.Solid.ChevronDown, null, modifier = Modifier.size(10.dp), tint = Color(0xFF0D9488))
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color.White)
-                    ) {
-                        sessions.forEach { session ->
-                            DropdownMenuItem(
-                                text = { Text(session.sessionName) },
-                                onClick = {
-                                    onSessionSelected(session.enrollementNo)
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                ExpressiveDropdown(
+                    label = sessions.find { it.enrollementNo == selectedEnrollmentId }?.sessionName ?: "Select Session",
+                    items = sessions.map { it.sessionName },
+                    onSelect = { name ->
+                        sessions.find { it.sessionName == name }?.let { onSessionSelected(it.enrollementNo) }
+                    },
+                    modifier = Modifier.width(180.dp),
+                    containerColor = Color(0xFFF1F5F9)
+                )
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -331,7 +301,7 @@ fun SessionHistorySection(history: List<SessionWiseHistory>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Session-wise History", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -393,7 +363,7 @@ fun PayFeeDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.medium,
             color = Color.White
         ) {
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -404,7 +374,7 @@ fun PayFeeDialog(
                     onValueChange = { amount = it },
                     label = { Text("Amount (₹)") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = MaterialTheme.shapes.extraSmall
                 )
 
                 // Simplified dropdown for Fee Head
@@ -435,7 +405,7 @@ fun PayFeeDialog(
                     onValueChange = { remarks = it },
                     label = { Text("Remarks") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = MaterialTheme.shapes.extraSmall
                 )
 
                 Row(

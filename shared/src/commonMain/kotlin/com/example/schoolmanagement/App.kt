@@ -38,6 +38,7 @@ import kotlinx.serialization.encodeToString
 import com.example.schoolmanagement.util.ToastManager
 import com.example.schoolmanagement.util.ToastType
 import com.example.schoolmanagement.presentation.components.ToastHost
+import com.example.schoolmanagement.presentation.theme.ExpressiveTheme
 
 @Composable
 @Preview
@@ -73,7 +74,7 @@ fun App() {
         }
     }
 
-    MaterialTheme {
+    ExpressiveTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             val currentBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = currentBackStackEntry?.destination?.route ?: "login"

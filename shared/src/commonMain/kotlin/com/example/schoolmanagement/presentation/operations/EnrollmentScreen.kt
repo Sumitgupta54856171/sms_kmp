@@ -35,7 +35,7 @@ fun EnrollmentScreen(viewModel: EnrollmentViewModel) {
         Card(
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -51,7 +51,7 @@ fun EnrollmentScreen(viewModel: EnrollmentViewModel) {
                     onClick = { viewModel.promoteStudents("2", 15000.0) }, // Simplified promotion
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
                     enabled = !isPromoting && state is EnrollmentState.Success,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = MaterialTheme.shapes.extraSmall
                 ) {
                     if (isPromoting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White)
@@ -85,7 +85,7 @@ fun StudentEnrollmentRow(student: com.example.schoolmanagement.api.models.Studen
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(

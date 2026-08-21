@@ -98,7 +98,7 @@ fun InvoiceHistoryScreen(viewModel: InvoiceHistoryViewModel) {
 private fun InvoiceHeader(isCompact: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Box(
-            modifier = Modifier.size(if (isCompact) 44.dp else 52.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF0FDFA)),
+            modifier = Modifier.size(if (isCompact) 44.dp else 52.dp).clip(MaterialTheme.shapes.small).background(Color(0xFFF0FDFA)),
             contentAlignment = Alignment.Center
         ) {
             Icon(FontAwesomeIcons.Solid.History, null, modifier = Modifier.size(if (isCompact) 20.dp else 24.dp), tint = Color(0xFF0D9488))
@@ -129,7 +129,7 @@ private fun InvoiceStatsRow(data: com.example.schoolmanagement.api.models.Invoic
             Card(
                 modifier = Modifier.weight(1f),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
             ) {
                 Column(modifier = Modifier.padding(if (isCompact) 12.dp else 16.dp)) {
@@ -161,7 +161,7 @@ private fun FilterSearchSection(
                 onValueChange = onSearchChange,
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Search student or invoice ID...", fontSize = 14.sp) },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.small,
                 singleLine = true,
                 leadingIcon = { Icon(FontAwesomeIcons.Solid.Search, null, modifier = Modifier.size(16.dp), tint = Color.Gray) },
                 colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White)
@@ -170,7 +170,7 @@ private fun FilterSearchSection(
             Button(
                 onClick = onRefresh,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.height(52.dp)
             ) {
                 Icon(FontAwesomeIcons.Solid.Sync, null, modifier = Modifier.size(16.dp))
@@ -179,7 +179,7 @@ private fun FilterSearchSection(
 
         Surface(
             color = Color.White,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.small,
             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
@@ -200,7 +200,7 @@ fun InvoiceCard(invoice: InvoiceHistoryItem, isCompact: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
@@ -225,7 +225,7 @@ fun InvoiceCard(invoice: InvoiceHistoryItem, isCompact: Boolean) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(invoice.studentName ?: "-", fontWeight = FontWeight.Bold, fontSize = if (isCompact) 14.sp else 16.sp, color = Color(0xFF1E293B))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("#${invoice.invoiceId}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D9488), modifier = Modifier.background(Color(0xFFF0FDFA), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
+                    Text("#${invoice.invoiceId}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D9488), modifier = Modifier.background(Color(0xFFF0FDFA), MaterialTheme.shapes.extraSmall).padding(horizontal = 4.dp))
                     Text(invoice.invoiceDate?.take(10) ?: "-", fontSize = 11.sp, color = Color.Gray)
                 }
             }
@@ -234,7 +234,7 @@ fun InvoiceCard(invoice: InvoiceHistoryItem, isCompact: Boolean) {
                 Text("₹${invoice.amount.toInt()}", fontWeight = FontWeight.Black, fontSize = if (isCompact) 15.sp else 18.sp, color = Color(0xFF1E293B))
                 Surface(
                     color = getPaymentColor(invoice.paymentMethod),
-                    shape = RoundedCornerShape(4.dp)
+                    shape = MaterialTheme.shapes.extraSmall
                 ) {
                     Text(
                         invoice.paymentMethod?.uppercase() ?: "CASH",

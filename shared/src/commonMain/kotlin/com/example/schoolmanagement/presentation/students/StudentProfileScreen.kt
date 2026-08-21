@@ -56,7 +56,7 @@ fun StudentProfileScreen(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Color(0xFFE0F2F1)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -138,7 +138,7 @@ fun ProfileDetailTab(student: StudentListItem?) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 InfoItem("Name", student.studentName ?: student.name ?: "-")
@@ -183,7 +183,7 @@ fun BankDetailTab(bank: BankDetailData?, onSave: (BankDetailData) -> Unit, isSav
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Bank Information", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -257,7 +257,7 @@ fun IDCardTab(student: StudentListItem?) {
             modifier = Modifier.size(300.dp, 450.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Simplified ID Card UI mirroring the React version
